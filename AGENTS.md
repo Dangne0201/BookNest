@@ -23,7 +23,13 @@ Keep this section accurate as work progresses. After a phase is accepted or comp
 
 Build a credible junior-level Java portfolio with practical library workflows, secure account-specific data, tests, and a reviewer-friendly local setup. Favor correctness, readable code, and design choices the user can explain over adding technologies for appearance. This is a learning portfolio, not a claim of production readiness.
 
-The user knows Java, REST APIs, Docker, HTML, and CSS. Keep the stack familiar and implement incrementally. Explain important trade-offs plainly when useful; do not hide complexity behind unnecessary abstractions.
+The idea started as a request for a Java portfolio with a different concept from the user's JavaScript Task Manager learning project. The user chose BookNest, a personal-library manager, to practice Java while building something with real business rules rather than a basic CRUD showcase.
+
+The user knows Java, REST APIs, Docker, HTML, and CSS, and wants to limit the amount of unfamiliar technology. They are a junior developer and want to build in small, controlled increments so each part can be understood, checked, and explained in an interview. The portfolio should demonstrate the user's learning and decisions, not look like a pile of technologies or something they cannot explain as AI-generated.
+
+Communicate in Vietnamese unless the user asks otherwise. Explain important trade-offs plainly and at a junior-friendly level when useful. Do not hide complexity behind unnecessary abstractions. Avoid rushing ahead: the user previously emphasized that discussion/planning was not permission to code, and was frustrated when they thought implementation had started prematurely. Treat roadmap phases as plans only; implement only after a clear, explicit request.
+
+The user wants to continue from another computer using GitHub. Treat this file as the durable shared project context: read it first on every new machine/session, and update the current checkpoint after real progress so another agent can resume without relying on chat history. Tell the user to sync/pull the repository on the other computer before expecting this file to contain the latest status.
 
 ## Agreed stack and scope boundaries
 
@@ -37,6 +43,8 @@ The user knows Java, REST APIs, Docker, HTML, and CSS. Keep the stack familiar a
 - Swagger/OpenAPI is not required.
 
 Do not add cloud services, OAuth/Google login, JWT, frontend frameworks, microservices, email, payments, or elaborate role systems. Avoid extra dependencies unless they solve a concrete need and the user agrees where appropriate.
+
+The goal is practical and appropriately scoped for a junior portfolio, not production-grade completeness. In particular, Swagger/OpenAPI is optional and intentionally omitted for this version; no cloud deployment is required.
 
 ## Product and domain requirements
 
@@ -92,6 +100,14 @@ Each account owns an isolated personal library. Business records include books, 
 - Make clear in the README that public demo credentials are local/demo-only and unsuitable for a public deployment.
 - Never commit real secrets. Use environment variables and a sample configuration without secret values.
 
+## API and reviewer experience
+
+Provide REST endpoints for equivalent capabilities for registration, login/logout, current account, book/copy management, members, checkout/return/renewal, reservation/queue management, and dashboard counts. Endpoint paths can follow consistent Spring conventions; document the implemented endpoints and representative request/response examples in the project README or concise API documentation.
+
+The reviewer should be able to clone the BookNest repository and run the application and PostgreSQL locally using Docker Compose, without installing Java, Maven, or PostgreSQL on the host. Prefer a multi-stage Docker build using Maven Wrapper in the build stage and a reasonably small runtime image, running as a non-root user when feasible. Compose must wait for a healthy database, use a BookNest-specific project/resource/volume name, and bind the app to loopback (for example `127.0.0.1`) rather than presenting itself as a public deployment. Do not publish PostgreSQL to the host unless there is a clear local-development need.
+
+Document the one-command startup, local URL, demo credentials and their limitations, shutdown, and a clearly warned reset procedure. Never execute volume/container deletion or affect Docker resources belonging to anything else.
+
 ## Security, correctness, and implementation expectations
 
 - Protect business endpoints with Spring Security; permit only registration, login, static resources, and explicitly safe health resources as appropriate.
@@ -106,6 +122,7 @@ Each account owns an isolated personal library. Business records include books, 
 - Prefer DTOs over exposing persistence entities when that protects internal details or avoids coupling/serialization problems.
 - Use constructor injection, clear names, and a small, understandable package structure (web/controllers, services, repositories, entities, DTOs, configuration/security as useful).
 - Do not add layers, generic frameworks, or TODO/placeholder endpoints and buttons without a concrete need.
+- Do not claim production readiness; document meaningful limitations and trade-offs honestly.
 
 ## Work protocol
 
@@ -117,6 +134,8 @@ Each account owns an isolated personal library. Business records include books, 
 6. Do not commit or push unless the user explicitly asks. Do not claim a build, test, Docker run, or manual flow passed unless it was actually run and passed.
 7. Ask before materially changing product behavior or expanding scope. For small unspecified details, choose the simplest conventional behavior and document it.
 8. Report incomplete work, environmental blockers, and unverified behavior honestly.
+9. At the start of a new session, briefly acknowledge the current checkpoint from this file before doing work. If the request is only a question or planning discussion, answer without editing or implementing.
+10. After a phase has actually been completed and accepted, update the checkpoint below with changed functionality/files, verification commands and outcomes, known limitations, and the next proposed phase. Keep project state in this file factual and concise.
 
 ## Incremental roadmap and acceptance checks
 
@@ -124,9 +143,9 @@ Complete one phase at a time. A phase is ready for the next only when its accept
 
 ### Phase 0 — Project foundation
 
-Create the Spring Boot/Maven Wrapper skeleton, Java 21 configuration, PostgreSQL connectivity, Dockerfile/Compose foundation, basic health check, and a minimal project README. No library workflows yet.
+Create the Spring Boot/Maven Wrapper skeleton, Java 21 configuration, PostgreSQL connectivity, Dockerfile/Compose foundation, basic health check, `.gitignore`, and a minimal project README. No library workflows yet.
 
-**Accept when:** Maven build passes; Compose configuration validates; app and database start together when Docker is available; app can connect to PostgreSQL; no real secrets are committed; Compose resources are BookNest-specific and scoped safely.
+**Accept when:** Maven build passes; Compose configuration validates; app and database start together when Docker is available; app can connect to PostgreSQL; health behavior is verified; no real secrets are committed; Compose resources are BookNest-specific and scoped safely.
 
 ### Phase 1 — Authentication and account isolation
 
@@ -178,7 +197,7 @@ Build the same-origin HTML/CSS/JavaScript screens for authentication and the mai
 
 ### Phase 9 — Demo data and reviewer documentation
 
-Add opt-in local/demo idempotent seed data. Complete README with scope, architecture/data model, run/stop/reset instructions and warning, demo login, principal API examples, tests (including Docker requirements), design trade-offs, and honest limitations.
+Add opt-in local/demo idempotent seed data. Complete README with scope, architecture/data model diagrams as useful, run/stop/reset instructions and warning, demo login, principal API examples, tests (including Docker requirements), design trade-offs, and honest limitations.
 
 **Accept when:** a repeat startup does not duplicate seed data; default/demo behavior matches configuration; a reviewer can follow the documented local workflow.
 
@@ -192,5 +211,6 @@ Run Maven `clean verify`, validate Compose, build/run the stack if Docker is ava
 
 - **Completed:** standalone Git repository initialized; public GitHub repository created; local `origin` configured; branch `main`; this project guide records the agreed context and roadmap.
 - **In progress:** none.
-- **Next authorized implementation step:** none yet. User asked to prepare a phased plan but has not authorized coding. Wait for an explicit request to begin Phase 0 or another specific task.
-- **Tests/build:** none; there is no application code yet.
+- **Git history:** setup/documentation only; no application implementation commits yet.
+- **Next authorized implementation step:** none yet. The user requested shared context and a phased plan but has not authorized application implementation. Wait for an explicit request to begin Phase 0 or another specific task.
+- **Tests/build:** none; there is no application code yet. The only validation so far has been Git/documentation checks.
