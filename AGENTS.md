@@ -3,10 +3,11 @@
 ## Project identity and workspace boundary
 
 - Project: **BookNest**, a personal-library management portfolio application.
-- This repository is the standalone workspace at `D:\NTGiang\BookNest`.
+- The only authorized project folder and Git repository for this work is `D:\NTGiang\BookNest`.
+- Keep every project file, change, and project-specific command strictly within this folder/repository. Do not create the project in a parent, sibling, nested, or different repository folder.
+- Do not inspect or operate on files, repositories, or workspaces outside `D:\NTGiang\BookNest`. This scope rule applies to all project work, not just source-code edits.
 - GitHub repository: `https://github.com/Dangne0201/BookNest` (public).
-- This project is completely separate from `JavaScript_Trainning`. Never read, edit, create, delete, move, format, or run commands against that repository as part of BookNest work.
-- Keep all BookNest project files in this repository. Do not create the old proposed `booknest-java/` subdirectory.
+- Do not create the old proposed `booknest-java/` subdirectory; the repository root itself is the project root.
 
 ## Current status
 
@@ -109,7 +110,7 @@ Each account owns an isolated personal library. Business records include books, 
 ## Work protocol
 
 1. Read this file, inspect the current repository, Git status, and relevant existing files before changing anything. Preserve user changes; never overwrite an existing `AGENTS.md` or other file without inspecting and resolving the conflict first.
-2. Work only in `D:\NTGiang\BookNest`. Do not make assumptions based on files in another repository.
+2. Keep all project work inside `D:\NTGiang\BookNest`; do not inspect or operate on paths or repositories outside this authorized workspace.
 3. Implement only the phase/task the user has explicitly authorized. The phase plan below is a roadmap, not permission to do all phases at once.
 4. Keep each change set focused. Build/test the smallest relevant scope, fix regressions caused by the change, then report actual outcomes.
 5. Do not run destructive commands against containers, volumes, databases, or files. Compose project/resource names must be specific to BookNest; never stop or delete unrelated Docker resources.
