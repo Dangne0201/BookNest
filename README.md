@@ -4,10 +4,10 @@ BookNest is a Java portfolio project for managing a personal library. It is bein
 
 ## Stack
 
-- Java 21
+- Java 17
 - Spring Boot 4.0.8, Spring MVC, Spring Data JPA, and Actuator
 - PostgreSQL 17
-- Maven Wrapper
+- Maven 3.9.16 via Maven Wrapper 3.3.4
 - Docker Compose
 
 ## Run locally with Docker

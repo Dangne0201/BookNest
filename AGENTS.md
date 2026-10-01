@@ -12,11 +12,12 @@
 ## Current status
 
 - Git has been initialized on branch `main`, and `origin` points to the GitHub repository above.
-- Phase 0 application foundation is implemented: Spring Boot 4.0.8/Java 21 Maven Wrapper skeleton, PostgreSQL configuration, Dockerfile/Compose, Actuator health probes, minimal README, and phase checklist.
-- `.\mvnw.cmd --no-transfer-progress clean verify` passed on the host using Temurin Java 25. The Maven compiler targets Java 21; tests use H2 and cover context startup plus readiness/database health output.
-- `docker compose config --quiet` passed.
-- `docker compose up -d --build` passed. Both `booknest-app-1` and `booknest-db-1` became healthy; `GET http://127.0.0.1:8080/actuator/health/readiness` returned `status=UP` and `components.db.status=UP`.
+- Phase 0 application foundation is implemented: Spring Boot 4.0.8/Java 17 Maven Wrapper skeleton, PostgreSQL configuration, Dockerfile/Compose, Actuator health probes, minimal README, and phase checklist.
+- After the Java 17 correction, `.\mvnw.cmd --no-transfer-progress clean verify` passed on host Temurin Java 25; Maven compiled main and test sources with `release 17`, and both H2 smoke tests passed.
+- `docker compose config --quiet` passed after the Java 17 correction.
+- `docker compose up -d --build` passed using Java 17 Maven build and Java 17 runtime images. Both `booknest-app-1` and `booknest-db-1` became healthy; `docker compose exec -T app java -version` reported Temurin 17.0.20.1; readiness returned `status=UP` and `components.db.status=UP`.
 - Docker Hub image pulls initially returned a local authentication error. For runtime verification only, the official Maven, Eclipse Temurin, and PostgreSQL images were pulled from the public Amazon ECR mirror and tagged in the local Docker cache; project configuration was not changed for this workaround.
+- After the user corrected the baseline to Java 17, removed the specifically tagged Java 21 Maven/JRE images that had been downloaded for the initial build and removed the generated `target/` output with Maven `clean`. Did not run Docker prune or touch unrelated images, containers, or volumes.
 - Phase 0 acceptance checks are complete; see `PHASE_CHECKLIST.md`.
 - No authentication or library-management functionality has been started.
 
@@ -36,10 +37,10 @@ The user wants to continue from another computer using GitHub. Treat this file a
 
 ## Agreed stack and scope boundaries
 
-- Java 21 LTS, Spring Boot, Spring MVC/REST.
+- Java 17 LTS, Spring Boot 4.0.8, Spring MVC/REST.
 - Spring Security with username/password, server-side session and HTTP-only session cookie; BCrypt password hashing.
-- Spring Data JPA/Hibernate and PostgreSQL.
-- Maven Wrapper, JUnit, Spring Boot Test, and Mockito when appropriate.
+- Spring Data JPA/Hibernate and PostgreSQL 17.
+- Maven 3.9.16 via Maven Wrapper 3.3.4, JUnit, Spring Boot Test, and Mockito when appropriate.
 - Plain HTML, CSS, and JavaScript served by Spring Boot from the same origin as the API.
 - Dockerfile and Docker Compose for local reviewer setup. A reviewer should not need Java, Maven, or PostgreSQL installed on the host to run the app.
 - Flyway is optional only if it keeps schema changes clear and simple.
@@ -48,6 +49,16 @@ The user wants to continue from another computer using GitHub. Treat this file a
 Do not add cloud services, OAuth/Google login, JWT, frontend frameworks, microservices, email, payments, or elaborate role systems. Avoid extra dependencies unless they solve a concrete need and the user agrees where appropriate.
 
 The goal is practical and appropriately scoped for a junior portfolio, not production-grade completeness. In particular, Swagger/OpenAPI is optional and intentionally omitted for this version; no cloud deployment is required.
+
+### Confirmed version baseline
+
+The user explicitly confirmed this version set on 2026-10-01. Keep it stable; ask before changing any of these versions:
+
+- Java: 17 (compiler target and Docker build/runtime).
+- Spring Boot: 4.0.8.
+- PostgreSQL: 17.
+- Maven: 3.9.16.
+- Maven Wrapper: 3.3.4.
 
 ## Product and domain requirements
 
@@ -148,7 +159,7 @@ Complete one phase at a time. A phase is ready for the next only when its accept
 
 ### Phase 0 — Project foundation
 
-Create the Spring Boot/Maven Wrapper skeleton, Java 21 configuration, PostgreSQL connectivity, Dockerfile/Compose foundation, basic health check, `.gitignore`, and a minimal project README. No library workflows yet.
+Create the Spring Boot/Maven Wrapper skeleton, Java 17 configuration, PostgreSQL connectivity, Dockerfile/Compose foundation, basic health check, `.gitignore`, and a minimal project README. No library workflows yet.
 
 **Accept when:** Maven build passes; Compose configuration validates; app and database start together when Docker is available; app can connect to PostgreSQL; health behavior is verified; no real secrets are committed; Compose resources are BookNest-specific and scoped safely.
 
@@ -216,6 +227,6 @@ Run Maven `clean verify`, validate Compose, build/run the stack if Docker is ava
 
 - **Completed:** standalone Git repository initialized; public GitHub repository created; local `origin` configured; branch `main`; this project guide records the agreed context and roadmap.
 - **Completed this turn:** Phase 0 implementation, verification, and acceptance checklist; see `PHASE_CHECKLIST.md`.
-- **Git history:** Phase 0 work is currently uncommitted and unpushed. Do not commit/push without explicit user request.
+- **Git history:** `f1143f0` contains the first Phase 0 implementation and is pushed. Java 17 correction and confirmed version-baseline documentation are currently uncommitted/unpushed. Do not commit/push unless the user asks.
 - **Next step:** Phase 0 is complete. Wait for the user to explicitly request Phase 1 before implementation.
-- **Verification:** Maven `clean verify` passed (2 tests, no failures); Compose config validation passed; image built; Compose app and PostgreSQL became healthy; readiness reported application and DB UP.
+- **Verification:** After switching to the user-confirmed Java 17 baseline: Maven `clean verify` passed (2 tests, no failures; compiled with release 17); Compose config validation passed; Java 17 container image built and ran; app and PostgreSQL became healthy; readiness reported application and DB UP.
