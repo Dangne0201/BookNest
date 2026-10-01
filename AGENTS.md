@@ -12,10 +12,13 @@
 ## Current status
 
 - Git has been initialized on branch `main`, and `origin` points to the GitHub repository above.
-- No application code exists; build and tests have not been run.
-- This file records the agreed project context and plan; it is not authorization to start implementation.
-- Do not start coding until the user explicitly asks to begin a phase or implement a specific task.
-- The current planned starting point is **Phase 0: project foundation**.
+- Phase 0 application foundation is implemented: Spring Boot 4.0.8/Java 21 Maven Wrapper skeleton, PostgreSQL configuration, Dockerfile/Compose, Actuator health probes, minimal README, and phase checklist.
+- `.\mvnw.cmd --no-transfer-progress clean verify` passed on the host using Temurin Java 25. The Maven compiler targets Java 21; tests use H2 and cover context startup plus readiness/database health output.
+- `docker compose config --quiet` passed.
+- `docker compose up -d --build` passed. Both `booknest-app-1` and `booknest-db-1` became healthy; `GET http://127.0.0.1:8080/actuator/health/readiness` returned `status=UP` and `components.db.status=UP`.
+- Docker Hub image pulls initially returned a local authentication error. For runtime verification only, the official Maven, Eclipse Temurin, and PostgreSQL images were pulled from the public Amazon ECR mirror and tagged in the local Docker cache; project configuration was not changed for this workaround.
+- Phase 0 acceptance checks are complete; see `PHASE_CHECKLIST.md`.
+- No authentication or library-management functionality has been started.
 
 Keep this section accurate as work progresses. After a phase is accepted or completed, update the status and checklist here with what actually changed, what was tested, the exact results, and any remaining work. Never mark work complete based only on intention.
 
@@ -136,6 +139,8 @@ Document the one-command startup, local URL, demo credentials and their limitati
 8. Report incomplete work, environmental blockers, and unverified behavior honestly.
 9. At the start of a new session, briefly acknowledge the current checkpoint from this file before doing work. If the request is only a question or planning discussion, answer without editing or implementing.
 10. After a phase has actually been completed and accepted, update the checkpoint below with changed functionality/files, verification commands and outcomes, known limitations, and the next proposed phase. Keep project state in this file factual and concise.
+11. Before starting any new phase, create that phase's checklists in both `PHASE_CHECKLIST.md` (English) and `PHASE_CHECKLIST.vi.md` (Vietnamese), including matching acceptance criteria, planned checks, and an anticipated file list where practical. Do not begin phase implementation until both checklists exist.
+12. Update both checklist files as each file is completed, not only at the end of the phase. Keep matching per-file ledgers with purpose and status; if implementation requires an unplanned file, add it to both checklists before or as it is introduced. At phase end, ensure both acceptance checklists show the same, verifiable outcomes.
 
 ## Incremental roadmap and acceptance checks
 
@@ -210,7 +215,7 @@ Run Maven `clean verify`, validate Compose, build/run the stack if Docker is ava
 ## Current checkpoint
 
 - **Completed:** standalone Git repository initialized; public GitHub repository created; local `origin` configured; branch `main`; this project guide records the agreed context and roadmap.
-- **In progress:** none.
-- **Git history:** setup/documentation only; no application implementation commits yet.
-- **Next authorized implementation step:** none yet. The user requested shared context and a phased plan but has not authorized application implementation. Wait for an explicit request to begin Phase 0 or another specific task.
-- **Tests/build:** none; there is no application code yet. The only validation so far has been Git/documentation checks.
+- **Completed this turn:** Phase 0 implementation, verification, and acceptance checklist; see `PHASE_CHECKLIST.md`.
+- **Git history:** Phase 0 work is currently uncommitted and unpushed. Do not commit/push without explicit user request.
+- **Next step:** Phase 0 is complete. Wait for the user to explicitly request Phase 1 before implementation.
+- **Verification:** Maven `clean verify` passed (2 tests, no failures); Compose config validation passed; image built; Compose app and PostgreSQL became healthy; readiness reported application and DB UP.

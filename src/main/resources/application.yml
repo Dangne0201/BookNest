@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: booknest
+  datasource:
+    url: ${BOOKNEST_DB_URL:jdbc:postgresql://localhost:5432/booknest}
+    username: ${BOOKNEST_DB_USER:booknest}
+    password: ${BOOKNEST_DB_PASSWORD:booknest_local_only}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState, db
+
+server:
+  shutdown: graceful
