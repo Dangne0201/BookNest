@@ -19,15 +19,32 @@
 - Docker Hub image pulls initially returned a local authentication error. For runtime verification only, the official Maven, Eclipse Temurin, and PostgreSQL images were pulled from the public Amazon ECR mirror and tagged in the local Docker cache; project configuration was not changed for this workaround.
 - After the user corrected the baseline to Java 17, removed the specifically tagged Java 21 Maven/JRE images that had been downloaded for the initial build and removed the generated `target/` output with Maven `clean`. Did not run Docker prune or touch unrelated images, containers, or volumes.
 - Phase 0 acceptance checks are complete; see `PHASE_CHECKLIST.md`.
-- No authentication or library-management functionality has been started.
+- Phase 1 authentication is implemented, verified, and accepted by the user. The user confirmed one shared library per running application/database; login accounts are staff, all registered staff accounts have equal basic permissions, and `Member` records are borrowers. Both Phase 1 checklists were revised before implementation and updated with verified results.
+- Phase 1 verification: `.\mvnw.cmd --no-transfer-progress clean verify` passed (10 tests, 0 failures/errors/skips); `docker compose config --quiet` and `docker compose up -d --build` passed. PostgreSQL 17.11 applied Flyway V1, both services became healthy, readiness reported app and DB UP, the session cookie had HttpOnly/SameSite=Lax, CSRF bootstrap returned 200, anonymous `/api/auth/me` returned 401, and a temporary account completed registration/login/current-account/logout (201/200/200/204) and was removed.
+- Phase 2 books and individual copies are implemented, verified, and accepted by the user. All authenticated staff share the same books and copies. Titles have required title/author and optional normalized unique ISBN, genre, publication year, and description; copies have `AVAILABLE`, `MAINTENANCE`, or `RETIRED` status. Available-copy counts are derived, and a title cannot be deleted while it has copies.
+- Phase 2 verification: `.\mvnw.cmd --no-transfer-progress clean verify` passed (16 tests, 0 failures/errors/skips); `docker compose config --quiet` passed; `docker compose up -d --build` passed without deleting/resetting the existing volume. PostgreSQL 17.11 applied Flyway V2, app and DB were healthy, readiness was UP/UP, and a live two-account flow verified registration/login, book/copy creation, shared visibility, cross-account status update, and updated availability counts. Temporary accounts/book/copy were removed; a follow-up query confirmed no temporary accounts/books/orphan copies remained.
+- The account/books/copies UI slice is implemented, verified, and accepted by the user. It uses same-origin static HTML/CSS/JavaScript, session-cookie authentication and CSRF. It provides registration/login/logout, shared title list/details/forms and per-title copy management, with safe text rendering and responsive layout.
+- UI verification: JavaScript syntax checks and `.\mvnw.cmd --no-transfer-progress clean verify` passed (16 tests). Docker Compose rebuilt and served `/`; browser checks exercised registration/login and visible login errors, title create/edit/delete, copy add/status/delete, logout, and malicious-looking title/description strings (rendered as text; no injected elements). At 375px the page had no horizontal overflow. Temporary UI test account and title/copy data were removed; a targeted database query confirmed none remained.
+- Phase 3 member backend is implemented, verified, and accepted; user-approved scope includes required full name and optional email/phone/notes, normalized blank optionals, shared CRUD, authentication/CSRF, and deletion of unreferenced records.
+- Phase 3 verification: `.\mvnw.cmd --no-transfer-progress clean verify` passed (20 tests, 0 failures/errors/skips); `docker compose config --quiet` passed; Compose rebuilt with existing PostgreSQL volume, applied Flyway V3, and reported app/DB healthy and readiness UP. A live authenticated API flow passed member create/list/update/delete and normalization; temporary member/account records were removed and confirmed absent. Referenced-member deletion cannot yet be exercised because loan/reservation/history tables do not exist; verify restrictive foreign-key behavior when adding those phases.
+- The member UI slice is implemented, verified, and accepted by the user. It adds accessible Books/Members tabs and responsive member listing/forms/CRUD using the existing same-origin API and CSRF helper; member-provided content is rendered with safe DOM APIs.
+- Member UI verification: all static JS syntax checks passed; full `clean verify` passed (20 tests); `docker compose config --quiet` and `docker compose up -d --build` passed. Browser tests exercised login, tab switching, member create/edit/delete, browser email validation, blank optional fields, a simulated 409 conflict message, safe rendering (0 injected `img`/`script` elements), and 375px layout (document width 360px). Temporary browser-test account/member records were removed and verified absent.
+- Phase 4 checkout/return backend is implemented under the approved 14-calendar-day policy. It records checkout/return dates and authenticated staff, derives active/overdue state, transitions copy status, preserves loan history with restrictive references, and serializes checkout on a locked copy with a database uniqueness guard. Renewals, reservations, loan UI, dashboard, and loan-list search/pagination remain future work.
+- Phase 4 verification: `.\mvnw.cmd --no-transfer-progress clean verify` passed (25 tests, 0 failures/errors/skips); `docker compose config --quiet` passed; Compose rebuilt without resetting the PostgreSQL volume, Flyway V4 was confirmed applied, and app/DB/readiness were healthy. Live PostgreSQL API checks confirmed checkout/return dates and staff attribution, a 14-day due date, and parallel checkout yielding exactly one 201 and one 409. Temporary test accounts/member/book/copies/loans were removed and targeted SQL counts confirmed no fixture rows remained. Loan test fixtures now delete dependent loans before referenced staff/member records to honor restrictive foreign keys.
+
+- The user approved the incremental checkout/return UI slice. It adds a third accessible workspace tab, a loan list with active/overdue/returned display, checkout selection limited to available copies, and confirmed return; checkout/return refresh inventory and loan records. Empty-state guidance explains how to create test data in Books and Members; no seed was added.
+- Loan UI verification: all static JavaScript syntax checks and `.\mvnw.cmd --no-transfer-progress clean verify` passed (25 tests); `docker compose config --quiet`, rebuild without resetting the database, and app/DB readiness passed. Browser checks registered/logged in a temporary account, created a member/book/available copy through the UI, checked out and returned it (14-day due date; active then returned row; copy availability changed), confirmed non-available copies are excluded/submit disabled, simulated a 409 and network error and checked localized messages, rendered overdue state, checked keyboard tab navigation and no page overflow at a 360px viewport. All temporary account/member/book/copy/loan rows were removed and targeted SQL counts confirmed zero fixtures. UI slice is awaiting user acceptance.
+- The user noted the password-change option was missing, approved the bilingual change-password checklist, and chose to end the current session after a successful change and require sign-in again. The feature is implemented and verified, awaiting user acceptance; other active sessions are not tracked/revoked.
+- The user then confirmed a product-model change: patrons should self-register and use borrowing/reservations in the shared public library; staff manage the library, with a highest-level admin. The user accepted no-email account recovery by admin verification and a one-time temporary password, plus host/server operational recovery for admin; never use fixed `admin/admin`. A bilingual proposed checklist is appended to `PHASE_CHECKLIST.md` and `PHASE_CHECKLIST.vi.md`; detailed product decisions and user approval are still pending. Do not implement this redesign until the detailed checklist is agreed.
+- Password-change verification: `.\mvnw.cmd --no-transfer-progress clean verify` passed (29 tests, 0 failures/errors/skips); all static JavaScript syntax checks, Compose config, rebuild without resetting PostgreSQL, and app/DB readiness passed. Browser tests exercised password-change UI, mismatch and incorrect-current-password errors, successful change with current-session invalidation, new-password sign-in and old-password rejection, and 360px layout without page overflow. Tests also confirmed BCrypt hash update affects only the current account; anonymous/CSRF/input-policy behavior and session invalidation are covered by automated tests. No password/hash browser storage or request-body logging was added. Temporary browser accounts were removed and confirmed absent.
 
 Keep this section accurate as work progresses. After a phase is accepted or completed, update the status and checklist here with what actually changed, what was tested, the exact results, and any remaining work. Never mark work complete based only on intention.
 
 ## Goal and mentoring approach
 
-Build a credible junior-level Java portfolio with practical library workflows, secure account-specific data, tests, and a reviewer-friendly local setup. Favor correctness, readable code, and design choices the user can explain over adding technologies for appearance. This is a learning portfolio, not a claim of production readiness.
+Build a credible junior-level Java portfolio with practical shared-library workflows, secure staff accounts, tests, and a reviewer-friendly local setup. Favor correctness, readable code, and design choices the user can explain over adding technologies for appearance. This is a learning portfolio, not a claim of production readiness.
 
-The idea started as a request for a Java portfolio with a different concept from the user's JavaScript Task Manager learning project. The user chose BookNest, a personal-library manager, to practice Java while building something with real business rules rather than a basic CRUD showcase.
+The idea started as a request for a Java portfolio with a different concept from the user's JavaScript Task Manager learning project. The user chose BookNest, a shared-library management application, to practice Java while building something with real business rules rather than a basic CRUD showcase.
 
 The user knows Java, REST APIs, Docker, HTML, and CSS, and wants to limit the amount of unfamiliar technology. They are a junior developer and want to build in small, controlled increments so each part can be understood, checked, and explained in an interview. The portfolio should demonstrate the user's learning and decisions, not look like a pile of technologies or something they cannot explain as AI-generated.
 
@@ -62,22 +79,28 @@ The user explicitly confirmed this version set on 2026-10-01. Keep it stable; as
 
 ## Product and domain requirements
 
-Each account owns an isolated personal library. Business records include books, individual copies, members, loans, reservations, and activity history.
+BookNest has **one shared library and one shared inventory per running application/database**. All authenticated staff accounts use the same domain records. If three copies of a title are all borrowed or held, every authenticated account sees that no copies are available; one account's checkout changes the availability seen by all other accounts. Separate deployments/databases are separate installations and do not share inventory.
 
-### Accounts and ownership
+Login accounts represent staff/operators, not patrons. `Member` records represent the people who borrow books; members do not log in. Every successfully registered staff account has the same basic permissions. Do not introduce a `Library` table or account-owned copies of domain records for the current one-library scope; revisit this only if the user asks for multiple libraries or tenants.
 
-- Support registration, login, logout, and current-account information.
-- Obtain the current account from Spring Security's authenticated context/session, never from client-supplied `userId`, `ownerId`, or library ID.
-- Scope every business read, update, and delete query to the authenticated account on the backend.
-- Do not rely on UI hiding for authorization. Cross-account access must fail safely and consistently without revealing another account's data.
+Business records include books, individual copies, members, loans, reservations, and activity history. They belong to the one shared library, not to the staff account that created them.
+
+### Accounts and shared access
+
+- Current implementation is the legacy Phase 1 model: public registration creates a staff account and all authenticated accounts have the same authority. The user's approved target direction is a shared public library with distinct `ADMIN`, `STAFF`, and `PATRON` roles; do not treat legacy behavior as the final product model.
+- Target behavior: patrons self-register, receive a linked borrower profile, and use self-service checkout/reservations. Staff manage library records and verify returns; admin manages staff/accounts and recovery. The detailed role matrix/checklist is pending user approval.
+- Resolve authenticated account and acting identity from Spring Security's server-side context/session, never from client-supplied actor/user/role/member IDs.
+- Keep shared books and copies common to the library, while restricting patron loan/reservation and personal information to the owning patron. Enforce authorization in backend services/controllers; hiding UI controls is not authorization.
+- Anonymous access should be limited to the approved public catalog, registration, login, CSRF bootstrap, static assets, and safe health endpoints. Do not expose personal or transaction data.
+- Public registration must never grant staff/admin permissions. Staff accounts are provisioned by admin under the new target model; no fixed/default admin password.
 
 ### Books, copies, members, loans
 
 - A `Book` represents a title (for example title, author, genre, and relevant bibliographic details).
 - A `BookCopy` represents an individual physical copy with an availability/loan/reservation status.
-- A `Member` is managed by a library owner and is not a login account.
+- In the current implementation, a `Member` is managed by staff and is not a login account. The approved target direction links each self-registered `PATRON` account to a Member profile; keep login credentials separate from member details and preserve historical references during migration.
 - A `Loan` records its copy, member, checkout date, due date, return date, renewal state, and history after return.
-- Do not allow borrowing when no copy is available, borrowing a copy/member from another account, double lending, or returning a missing/already-returned loan.
+- Do not allow borrowing when no copy is available, borrowing a missing member/copy, double lending, or returning a missing/already-returned loan.
 - Validate due dates. Derive overdue status from due date and current time rather than persisting a status that can become stale.
 - Allow at most one renewal. Reject renewal for overdue loans or when someone is waiting for that title.
 - Preserve referential integrity and useful loan history when a member or book is referenced by activity.
@@ -95,7 +118,7 @@ Each account owns an isolated personal library. Business records include books, 
 - Keep ordinary business history for important events such as checkout, return, renewal, and reservation; do not implement event sourcing.
 - Provide backend search/filter, database-backed pagination, and sorting for books and loans.
 - Allowlist sort fields; validate page and size; never concatenate arbitrary client input into SQL.
-- Provide a simple account-scoped dashboard with useful counts such as available, loaned, overdue, and queued items.
+- Provide a simple shared-library dashboard with useful counts such as available, loaned, overdue, and queued items.
 
 ### User interface
 
@@ -107,9 +130,9 @@ Each account owns an isolated personal library. Business records include books, 
 
 ### Demo data
 
-- Provide one demo account and sample books/copies only in explicitly enabled local/demo configuration.
+- Provide one demo account and one shared set of sample books/copies only in explicitly enabled local/demo configuration.
 - Seed idempotently; restarting must not create duplicates.
-- Do not populate every newly registered personal library with demo books.
+- Seed the shared library once; do not create duplicate demo inventories for each staff account.
 - If demo mode is disabled, do not create a default account or password.
 - Make clear in the README that public demo credentials are local/demo-only and unsuitable for a public deployment.
 - Never commit real secrets. Use environment variables and a sample configuration without secret values.
@@ -145,7 +168,7 @@ Document the one-command startup, local URL, demo credentials and their limitati
 3. Implement only the phase/task the user has explicitly authorized. The phase plan below is a roadmap, not permission to do all phases at once.
 4. Keep each change set focused. Build/test the smallest relevant scope, fix regressions caused by the change, then report actual outcomes.
 5. Do not run destructive commands against containers, volumes, databases, or files. Compose project/resource names must be specific to BookNest; never stop or delete unrelated Docker resources.
-6. Do not commit or push unless the user explicitly asks. Do not claim a build, test, Docker run, or manual flow passed unless it was actually run and passed.
+6. After the user explicitly accepts a completed phase, verify its final state, commit the phase changes, and push the commit to the configured GitHub remote. Do not commit or push work for a phase that is still in progress or awaiting acceptance. Do not claim a build, test, Docker run, or manual flow passed unless it was actually run and passed.
 7. Ask before materially changing product behavior or expanding scope. For small unspecified details, choose the simplest conventional behavior and document it.
 8. Report incomplete work, environmental blockers, and unverified behavior honestly.
 9. At the start of a new session, briefly acknowledge the current checkpoint from this file before doing work. If the request is only a question or planning discussion, answer without editing or implementing.
@@ -163,23 +186,23 @@ Create the Spring Boot/Maven Wrapper skeleton, Java 17 configuration, PostgreSQL
 
 **Accept when:** Maven build passes; Compose configuration validates; app and database start together when Docker is available; app can connect to PostgreSQL; health behavior is verified; no real secrets are committed; Compose resources are BookNest-specific and scoped safely.
 
-### Phase 1 — Authentication and account isolation
+### Phase 1 — Authentication and shared-library access
 
-Implement registration, login/logout, BCrypt, session cookie, CSRF, current-account lookup, and account/library ownership foundations.
+Implement registration, login/logout, BCrypt, session cookie, CSRF, current staff-account lookup, and the shared-library access model. Every registered account receives the same basic staff permission; accounts identify who performed a request but do not own separate copies of books or business data.
 
-**Accept when:** authentication behavior is tested; unauthenticated users cannot call business APIs; passwords are never stored/returned in clear text; tests prove account A cannot read/update/delete account B's data.
+**Accept when:** authentication behavior is tested; unauthenticated users cannot call business APIs; passwords are never stored/returned in clear text; registered accounts receive equal permissions; the shared-library model is documented without per-account domain-data isolation.
 
 ### Phase 2 — Books and individual copies
 
-Implement account-scoped book and copy management, statuses, validation, persistence constraints, and focused tests.
+Implement shared book and copy management, statuses, validation, persistence constraints, and focused tests. Every authenticated staff account sees the same inventory and availability.
 
-**Accept when:** create/list/update/delete and copy status behavior work; ownership is enforced in backend queries; invalid data and referenced records are handled safely.
+**Accept when:** create/list/update/delete and copy status behavior work; one account's changes to books/copies and stock availability are visible to other authenticated accounts; anonymous access is rejected; invalid data and referenced records are handled safely.
 
 ### Phase 3 — Members
 
-Implement account-scoped member management and rules for deletion when loans or history reference a member.
+Implement shared member management and rules for deletion when loans or history reference a member.
 
-**Accept when:** a member from another account cannot be used; referential integrity/history is preserved; relevant behavior is tested.
+**Accept when:** all authenticated staff accounts see the same members; referential integrity/history is preserved; relevant behavior is tested.
 
 ### Phase 4 — Checkout and return
 
@@ -195,19 +218,19 @@ Implement the one-renewal policy, eligibility rules, FIFO reservations, copy hol
 
 ### Phase 6 — History and backend list features
 
-Complete account-scoped activity/history, search/filter, database-backed pagination, and allowlisted sorting for books and loans.
+Complete shared-library activity/history (including the acting staff account), search/filter, database-backed pagination, and allowlisted sorting for books and loans.
 
 **Accept when:** history follows the lifecycle accurately; pagination/search/sort tests pass; invalid sort fields and invalid paging inputs are safely handled.
 
 ### Phase 7 — Dashboard
 
-Implement simple account-scoped inventory, loan, overdue, and reservation counts.
+Implement simple shared-library inventory, loan, overdue, and reservation counts.
 
-**Accept when:** dashboard values match stored business data and cannot expose another account's counts.
+**Accept when:** dashboard values match the shared library's business data and are the same for staff accounts with equal permissions.
 
 ### Phase 8 — Plain web interface
 
-Build the same-origin HTML/CSS/JavaScript screens for authentication and the main workflows, with CSRF-aware API calls and usable error/empty/loading states.
+The original schedule placed all UI work here, after the backend phases. The user chose an incremental approach instead: after the relevant backend phase is implemented and accepted, prepare a bilingual checklist and add its corresponding UI slice before moving on where practical. Do not wait until Phase 8 to begin all UI work. Use the same-origin HTML/CSS/JavaScript stack, CSRF-aware API calls, and usable error/empty/loading states. Phase 8 now means completing and polishing the remaining integrated screens, responsive behavior, and end-to-end flows.
 
 **Accept when:** no committed control is a fake/placeholder; the main user flows work against the API; untrusted text is rendered safely; layout works on a phone-sized viewport.
 
@@ -227,6 +250,7 @@ Run Maven `clean verify`, validate Compose, build/run the stack if Docker is ava
 
 - **Completed:** standalone Git repository initialized; public GitHub repository created; local `origin` configured; branch `main`; this project guide records the agreed context and roadmap.
 - **Completed this turn:** Phase 0 implementation, verification, and acceptance checklist; see `PHASE_CHECKLIST.md`.
-- **Git history:** `f1143f0` contains the first Phase 0 implementation and is pushed. Java 17 correction and confirmed version-baseline documentation are currently uncommitted/unpushed. Do not commit/push unless the user asks.
-- **Next step:** Phase 0 is complete. Wait for the user to explicitly request Phase 1 before implementation.
-- **Verification:** After switching to the user-confirmed Java 17 baseline: Maven `clean verify` passed (2 tests, no failures; compiled with release 17); Compose config validation passed; Java 17 container image built and ran; app and PostgreSQL became healthy; readiness reported application and DB UP.
+- **Git history:** Phase 0 and the Java 17 correction are committed and pushed; Phase 1/2 implementation and related documentation/checklist updates are uncommitted. Do not commit/push unless the user asks.
+- **Current step:** Phase 1, Phase 2, account/books/copies UI, Phase 3 member backend, and member UI are accepted. Phase 4 backend/UI and the separately approved password-change slice are implemented and await user acceptance. The user has now approved the patron self-registration/admin-role/password-recovery checklist and implementation is underway. Do not commit or push this work before acceptance.
+- **Current implementation:** Patron registration creates a linked Member; roles `ADMIN`, `STAFF`, and `PATRON` are enforced on the backend; public catalog browsing, patron-scoped loans/reservations, FIFO holds, admin-created staff, account reset, local admin recovery, required temporary-password changes, credential-version session invalidation, and patron profile UI are implemented. README and bilingual checklists have been updated. Full regression, Compose/PostgreSQL migration/data-preservation, admin recovery in isolated PostgreSQL, frontend syntax, and browser flows are verified; the work awaits user acceptance.
+- **Latest verification:** `.\mvnw.cmd --no-transfer-progress clean verify` passed all 40 tests with 0 failures/errors/skips; all 9 JavaScript modules passed `node --check`; `docker compose config --quiet` passed. PostgreSQL on the existing Compose volume migrated from V4 to V6 while account/book/copy/member/loan counts remained 1/1/0/0/0. An isolated scratch PostgreSQL database verified the actual headless admin-recovery CLI, `ADMIN_RECOVERY` audit row, forced password change, and credential version 1; the named scratch database was dropped afterward. Browser checks covered guest catalog, patron registration/sign-in, profile load/save, reservation/cancel, and a 360px viewport without horizontal overflow. Final Compose rebuild is healthy and readiness returns HTTP 200; persistent counts remain unchanged.

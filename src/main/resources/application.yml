@@ -27,3 +27,10 @@ management:
 
 server:
   shutdown: graceful
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: BOOKNEST_SESSION
+        http-only: true
+        same-site: lax
