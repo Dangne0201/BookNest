@@ -25,6 +25,10 @@ management:
         readiness:
           include: readinessState, db
 
+booknest:
+  demo-data:
+    enabled: ${BOOKNEST_DEMO_DATA_ENABLED:false}
+
 server:
   shutdown: graceful
   servlet:

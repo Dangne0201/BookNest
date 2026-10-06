@@ -41,7 +41,26 @@ There is no email-based recovery. A patron or staff member must contact the libr
 4. Staff accounts are provisioned by the administrator. Staff maintain books/copies and member records, and confirm physical returns.
 5. Admins use **Tài khoản** to provision staff accounts or reset a verified patron/staff account. Temporary passwords are shown once and require a change at the next sign-in.
 
-There is no automatic library/demo seed. Register a patron and, as staff, add a book and at least one `AVAILABLE` physical copy to try checkout. Loans are due 14 calendar days after checkout. When a copy is returned, it is held for the first eligible patron in the FIFO queue.
+Demo data is disabled by default. To initialize a local sample library, explicitly enable it before starting Compose:
+
+```powershell
+$env:BOOKNEST_DEMO_DATA_ENABLED = "true"
+docker compose up --build -d
+Remove-Item Env:BOOKNEST_DEMO_DATA_ENABLED
+docker compose up -d
+```
+
+The first command starts the app with demo initialization enabled; the final command recreates the app with the default-off setting after the seed is recorded. The initializer adds sample accounts, linked patron profiles, a walk-in member, *The Pragmatic Programmer*, *Clean Code*, and *The Hobbit* with copies in several inventory states, active/overdue/returned loans, and held/waiting/cancelled/fulfilled reservations. It does not create an administrator. The seed is repeat-safe and does not delete existing records; once inserted, demo rows remain in the PostgreSQL volume even if the option is later disabled. Do not enable this option outside a local/demo environment.
+
+Demo sign-in credentials (local use only):
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Staff | `demo-staff` | `BookNestDemoStaff2026!` |
+| Patron | `demo-patron` | `BookNestDemoReader2026!` |
+| Patron | `demo-patron-two` | `BookNestDemoReaderTwo2026!` |
+
+These public demo credentials are unsuitable for any public deployment. They are stored in the database only as BCrypt hashes. To try checkout as a patron, sign in as either demo patron; for catalog/member/loan management, sign in as demo staff. Loans are due 14 calendar days after checkout. When a copy is returned, it is held for the first eligible patron in the FIFO queue.
 
 Stop services without deleting data:
 

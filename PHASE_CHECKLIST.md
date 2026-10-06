@@ -446,3 +446,38 @@ The user approved this detailed checklist and implementation. The product direct
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — implementation guidance and status.
 
 **State:** Checklist approved; implementation and the 40-test regression suite are complete. The Compose PostgreSQL migration advanced V4→V6 while preserving the pre-existing row counts (1 account, 1 book, 0 copies/members/loans); live browser checks covered public catalog, patron signup/sign-in, profile load/save, reservation/cancel, and 360px layout. The actual admin-recovery CLI was verified on an isolated PostgreSQL scratch database, including temporary-password enforcement and audit; only that scratch database was removed. The phase still awaits user acceptance; do not commit or push before acceptance.
+
+### Demo-data slice — local sample library (approved; implemented and verified, awaiting acceptance)
+
+The user asked for a populated local database to explore the application and approved a complete demo dataset with patron and staff accounts, without creating a default administrator. This is a focused slice of Phase 9, not approval to implement the rest of Phase 9.
+
+#### Scope
+
+- Add an explicitly opt-in, repeat-safe local demo initializer for sample staff/patron accounts, linked and walk-in member profiles, books/copies across relevant inventory states, loan history, and reservation states.
+- Never create or reset an administrator account. Keep demo initialization disabled by default, document credentials as local/demo-only, and preserve all existing user data.
+- Seed once per natural demo record; do not overwrite passwords, profiles, book details, loan history, or user-modified statuses on restart. Report conflicting reserved demo usernames/ISBNs explicitly.
+- Keep the sample rows relationally valid: patron-owned activity must link to its patron profile; active loans and held reservations must agree with copy status; staff actions must reference the demo staff account.
+
+#### Acceptance checks
+
+- [x] User approved the demo-data scope before implementation.
+- [x] Demo data is disabled by default and only initializes when the local demo option is explicitly enabled.
+- [x] The seed provides demo STAFF and PATRON sign-ins, linked patron profiles plus a walk-in profile, several titles and copies, active/overdue/returned loan examples, and held/waiting reservation examples; no admin is seeded.
+- [x] Demo passwords are stored only as BCrypt hashes and are clearly documented as local/demo-only credentials; conflicts never silently replace an existing account or library record.
+- [x] Re-running initialization creates no duplicate accounts, members, books, copies, loans, or reservations and preserves existing records.
+- [x] Tests verify seed contents, ownership/state consistency, opt-in behavior, and repeat safety.
+- [x] Existing data in the user's Compose PostgreSQL volume remains intact; live counts and demo sign-in/views are verified without deleting or resetting the volume.
+- [x] README, AGENTS.md, and both checklists document the exact enablement steps, demo credentials, and verified results.
+
+#### Anticipated file ledger
+
+- [x] `src/main/java/com/booknest/demo/DemoDataInitializer.java` — add the opt-in, transactional, repeat-safe sample dataset.
+- [x] `src/main/java/com/booknest/demo/DemoSeedRun.java` and `DemoSeedRunRepository.java` — record successful completion so later restarts preserve demo records the user has edited.
+- [x] `src/main/resources/db/migration/V7__track_demo_seed_run.sql` — add a forward-only seed marker table; no existing library rows are altered.
+- [x] `src/main/resources/application.yml`, `compose.yaml`, and `.env.example` — wire the demo flag with a disabled-by-default value.
+- [x] `src/test/java/com/booknest/demo/DemoDataInitializerTests.java` — verify opt-in behavior, relationships, and idempotency.
+- [x] `src/test/java/com/booknest/BookNestApplicationTests.java` — verify the initializer bean is absent when demo mode is disabled.
+- [x] `README.md` — document local demo activation, accounts/passwords, sample records, and the no-admin policy.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — record approved scope, file ledger, and actual verification.
+
+**State:** Approved demo-data slice is implemented, verified, and accepted by the user. `.\mvnw.cmd --no-transfer-progress clean verify` passed 45 tests with 0 failures/errors/skips; `docker compose config --quiet` passed and the final Docker image rebuilt successfully. Existing PostgreSQL data was preserved through Flyway V6→V7. Counts changed from the pre-seed 3 accounts/1 book/0 copies/1 member/0 loans/0 reservations to 6/4/9/4/3/4 plus one seed marker. App restart preserved the same counts, readiness returned HTTP 200, and Compose now runs with demo initialization disabled. Browser checks verified public catalog, demo staff access to books/members/loans/queues, and patron access to only their own active loan and held reservation. No volume, database, or unrelated Docker resource was deleted or reset.

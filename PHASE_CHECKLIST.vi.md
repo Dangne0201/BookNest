@@ -447,3 +447,38 @@ Người dùng đã duyệt checklist chi tiết và việc triển khai. Hướ
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, `PHASE_CHECKLIST.vi.md` — hướng dẫn triển khai và trạng thái.
 
 **Trạng thái:** Checklist đã được duyệt; triển khai và bộ regression 40 test đã hoàn tất. Migration PostgreSQL trên Compose đã nâng V4→V6, giữ nguyên số lượng dữ liệu ban đầu (1 account, 1 book, 0 copy/member/loan); kiểm tra trình duyệt thật gồm catalog công khai, đăng ký/đăng nhập patron, mở/lưu hồ sơ, đặt/hủy chỗ và layout 360px. CLI khôi phục admin thực tế đã được kiểm chứng trên database PostgreSQL tạm biệt lập, gồm mật khẩu tạm bắt buộc đổi và audit; chỉ database tạm này được xóa sau thử nghiệm. Phase vẫn chờ người dùng nghiệm thu; chưa commit/push trước khi nghiệm thu.
+
+### Lát cắt dữ liệu demo — thư viện mẫu local (đã duyệt; đã triển khai/kiểm chứng, chờ nghiệm thu)
+
+Người dùng muốn có database local với dữ liệu để tự khám phá ứng dụng và đã duyệt bộ demo đầy đủ gồm tài khoản bạn đọc/nhân viên, không tạo admin mặc định. Đây là một lát cắt giới hạn của Phase 9, không phải cho phép triển khai toàn bộ Phase 9.
+
+#### Phạm vi
+
+- Thêm trình khởi tạo dữ liệu demo local có bật rõ ràng và an toàn khi chạy lặp: tài khoản nhân viên/bạn đọc mẫu, hồ sơ Member liên kết và bạn đọc vãng lai, đầu sách/bản sách ở nhiều trạng thái, lịch sử mượn và các trạng thái đặt chỗ.
+- Không bao giờ tạo hoặc reset tài khoản admin. Mặc định tắt khởi tạo demo; ghi rõ credential chỉ dùng local/demo; giữ nguyên mọi dữ liệu hiện có.
+- Chỉ tạo từng bản ghi demo một lần; không ghi đè mật khẩu, hồ sơ, thông tin sách, lịch sử mượn hoặc trạng thái do người dùng thay đổi khi khởi động lại. Báo lỗi rõ nếu username/ISBN demo đã bị dùng cho dữ liệu khác.
+- Giữ quan hệ nghiệp vụ hợp lệ: giao dịch bạn đọc gắn với đúng hồ sơ; lượt mượn đang hoạt động/trạng thái bản sách và chỗ giữ bản sách phải nhất quán; nhân viên thao tác được tham chiếu đúng.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Người dùng đã duyệt phạm vi dữ liệu demo trước khi triển khai.
+- [x] Demo mặc định tắt và chỉ khởi tạo khi bật tùy chọn demo local một cách tường minh.
+- [x] Bộ demo có đăng nhập STAFF/PATRON, hồ sơ bạn đọc liên kết và một hồ sơ vãng lai, nhiều đầu sách/bản sách, ví dụ mượn đang hoạt động/quá hạn/đã trả và đặt chỗ đang giữ/đang chờ; không seed admin.
+- [x] Mật khẩu demo chỉ lưu dưới dạng BCrypt hash và được ghi rõ chỉ dùng local/demo; xung đột không âm thầm thay tài khoản hay dữ liệu thư viện hiện có.
+- [x] Khởi tạo nhiều lần không nhân bản account/member/book/copy/loan/reservation và không làm mất bản ghi có sẵn.
+- [x] Kiểm thử xác minh nội dung seed, liên kết/quy tắc trạng thái, hành vi bật/tắt và chạy lặp an toàn.
+- [x] Dữ liệu cũ trong PostgreSQL Compose của người dùng còn nguyên; kiểm chứng số lượng dữ liệu và đăng nhập/hiển thị mẫu thật mà không xóa/reset volume.
+- [x] README, AGENTS.md và checklist song ngữ ghi đúng cách bật, tài khoản/mật khẩu demo và kết quả kiểm chứng thực tế.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/java/com/booknest/demo/DemoDataInitializer.java` — thêm bộ dữ liệu mẫu có bật tường minh, transactional và chạy lặp an toàn.
+- [x] `src/main/java/com/booknest/demo/DemoSeedRun.java` và `DemoSeedRunRepository.java` — ghi nhận seed hoàn tất để lần khởi động sau giữ nguyên dữ liệu demo người dùng đã sửa.
+- [x] `src/main/resources/db/migration/V7__track_demo_seed_run.sql` — thêm bảng đánh dấu tiến về phía trước; không sửa/xóa dữ liệu thư viện cũ.
+- [x] `src/main/resources/application.yml`, `compose.yaml` và `.env.example` — nối cờ demo với giá trị mặc định tắt.
+- [x] `src/test/java/com/booknest/demo/DemoDataInitializerTests.java` — kiểm thử bật/tắt, liên kết dữ liệu và tính idempotent.
+- [x] `src/test/java/com/booknest/BookNestApplicationTests.java` — xác minh không có initializer khi chế độ demo tắt.
+- [x] `README.md` — hướng dẫn bật demo local, tài khoản/mật khẩu, bản ghi mẫu và nguyên tắc không tạo admin.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — ghi phạm vi đã duyệt, ledger và kết quả kiểm chứng thực tế.
+
+**Trạng thái:** Lát cắt dữ liệu demo đã duyệt, triển khai, kiểm chứng và được người dùng nghiệm thu. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 45 test, 0 lỗi/thất bại/bỏ qua; `docker compose config --quiet` đạt và Docker image cuối đã build thành công. Dữ liệu PostgreSQL cũ được giữ nguyên khi migrate Flyway V6→V7. Số lượng trước/sau seed chuyển từ 3 account/1 book/0 copy/1 member/0 loan/0 reservation sang 6/4/9/4/3/4, cộng một seed marker. Khởi động lại app giữ nguyên số lượng, readiness HTTP 200 và Compose hiện chạy với khởi tạo demo đã tắt. Kiểm tra trình duyệt xác nhận catalog công khai, tài khoản staff xem sách/member/loan/hàng chờ và patron chỉ xem loan cùng đặt chỗ của chính mình. Không volume/database/container hay tài nguyên Docker ngoài phạm vi nào bị xóa/reset.
