@@ -790,6 +790,29 @@ Scope: improve the public and patron catalog's visual discovery while preserving
 
 **Outcome (2026-10-06):** Added local CSS cover illustrations and a responsive card catalog for PUBLIC/PATRON while preserving the STAFF/ADMIN table. A temporary static preview with mocked API responses verified public cards, patron available-copy/detail and reserve controls, staff table rendering, search (`q=query-check`), paging (`page=1`), safe text (an HTML-looking title created zero image elements), and no horizontal overflow at 360/375/768/1280px. ADMIN was not independently browser-tested; it uses the same existing `canManage()` branch as STAFF. The preview server was stopped. Then `docker compose up -d --build app` built successfully and recreated only the app; the existing PostgreSQL service and `booknest-postgres-data` volume were preserved. Compose reports app and DB healthy; `/actuator/health/readiness` returned HTTP 200 with app and DB UP; `/` returned HTTP 200. Live browser verification after redeploy showed 20 public cards with CSS covers; at 360px document width matched client width (345px available content area), with no horizontal overflow. The app restart invalidated the in-memory login session, so sign in again; no database data or credentials changed. `node --check` passed for all static JavaScript, `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests with 0 failures/errors/skips, `docker compose config --quiet` passed, and `git diff --check` passed. No commit or push has been made; awaiting user acceptance.
 
+### Catalog presentation polish
+
+Scope: refine catalog discovery without changing library behavior or record content. Reduce the public landing hero's vertical footprint, remove the repeated title from decorative CSS covers, make catalog summary figures less visually dominant, and clarify the search section heading.
+
+#### Acceptance checks
+
+- [x] Public catalog cards appear sooner on initial desktop and mobile views while sign-in and registration remain available.
+- [x] Each card presents the book title once as accessible content; decorative covers remain attractive and hidden from assistive technology.
+- [x] Catalog summary metrics remain readable but visually secondary to the catalog and filters.
+- [x] Staff inventory and dashboard, patron controls, search, filtering, pagination, and existing copy/loan workflows remain unchanged.
+- [x] Verify no horizontal overflow at 360px and desktop, syntax checks, Maven tests, Compose config, and `git diff --check`; inspect browser views for anonymous and signed-in roles.
+
+#### Anticipated file ledger
+
+- [x] `src/main/resources/static/index.html` — scope catalog-summary styling and clarify the book-discovery section heading.
+- [x] `src/main/resources/static/js/books.js` — remove duplicated card-cover title while retaining safe semantic card title.
+- [x] `src/main/resources/static/css/styles.css` — compact landing hero and catalog metrics without regressing responsive layouts.
+- [x] `PHASE_CHECKLIST.md` and `AGENTS.md` — record scope, exact verification, and acceptance state.
+
+**State:** Implemented, verified, and deployed; awaiting user acceptance before publication.
+
+**Outcome (2026-10-06):** Reduced the desktop landing hero's minimum height from 600px to 450px and tightened mobile sign-in spacing while keeping both sign-in and account creation visible. At a 360px viewport, the catalog heading moved from y=825px before the polish to y=791px after; document width stayed 345px with no horizontal overflow. Replaced duplicated cover titles with decorative title initials; all 20 public/patron cards retained one semantic title, decorative cover content remained `aria-hidden`, and patron borrow/detail actions remained present. Changed the summary labels to shorter terms and styled the three catalog figures as compact secondary metrics; renamed the repeated catalog subheading to “Find a book.” Browser viewport checks at 360/375/768/1280/1440px found document width equal to client width. Anonymous and PATRON views showed cards; STAFF retained the dashboard and inventory table (20 rows) with cards hidden. A read-only catalog search for “Clean” returned “Clean Code”; resetting it restored the 54-title result and pagination advanced correctly to page 2 of 3. Demo sign-ins were read-only and logged out; no library data changed. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips); all static JavaScript passed `node --check`; `docker compose config --quiet` and `git diff --check` passed. `docker compose up -d --build app` rebuilt/recreated only the app; readiness and DB were UP, `/` returned HTTP 200, and `booknest-postgres-data` remained present.
+
 ### Product-wide English localization
 
 Scope: make application UI, project documentation, and existing catalog text English, including dynamic status, validation, confirmation, accessibility, and error text. Preserve business behavior, API contracts, catalog IDs and relationships, and all non-catalog records. Retire the duplicate Vietnamese checklist and maintain this English checklist as the single project record.

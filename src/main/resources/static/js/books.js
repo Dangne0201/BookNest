@@ -144,10 +144,10 @@ export function initializeBooks(
 		const coverKicker = document.createElement("span");
 		coverKicker.className = "book-cover-kicker";
 		coverKicker.textContent = "BOOKNEST · SHARED LIBRARY";
-		const coverTitle = document.createElement("span");
-		coverTitle.className = "book-cover-title";
-		coverTitle.textContent = book.title;
-		cover.append(coverKicker, coverTitle);
+		const coverMark = document.createElement("span");
+		coverMark.className = "book-cover-mark";
+		coverMark.textContent = Array.from(book.title.trim())[0]?.toLocaleUpperCase() || "B";
+		cover.append(coverKicker, coverMark);
 
 		const content = document.createElement("div");
 		content.className = "book-card-content";

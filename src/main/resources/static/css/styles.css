@@ -195,11 +195,11 @@ textarea:focus-visible {
 	width: min(1160px, 90vw);
 	min-height: calc(100vh - 150px);
 	margin: 0 auto;
-	padding: 54px 0 72px;
+	padding: 40px 0 72px;
 }
 
 .auth-layout {
-	min-height: 600px;
+	min-height: 450px;
 	display: grid;
 	grid-template-columns: 1fr minmax(350px, 440px);
 	align-items: center;
@@ -228,9 +228,9 @@ p {
 
 .auth-intro h1,
 .page-heading h1 {
-	margin-bottom: 20px;
+	margin-bottom: 16px;
 	font-family: Georgia, "Times New Roman", serif;
-	font-size: clamp(2.8rem, 5.5vw, 4.7rem);
+	font-size: clamp(2.8rem, 5.2vw, 4.2rem);
 	font-weight: 600;
 	letter-spacing: -.055em;
 	line-height: 1.07;
@@ -244,7 +244,7 @@ p {
 }
 
 .auth-note {
-	margin-top: 42px;
+	margin-top: 30px;
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -263,7 +263,7 @@ p {
 }
 
 .auth-card {
-	padding: 30px;
+	padding: 26px;
 	border: 1px solid rgb(66 71 57 / 8%);
 	border-radius: 18px;
 	background: rgb(255 255 255 / 93%);
@@ -475,6 +475,34 @@ textarea:focus {
 	gap: 17px;
 }
 
+.catalog-summary {
+	margin: 0 0 32px;
+	gap: 12px;
+}
+
+.catalog-summary .summary-card {
+	min-height: 78px;
+	padding: 13px 16px;
+	gap: 12px;
+	border-radius: 11px;
+}
+
+.catalog-summary .summary-icon {
+	width: 35px;
+	height: 35px;
+	border-radius: 10px;
+	font-size: 1rem;
+}
+
+.catalog-summary .summary-card p {
+	margin-bottom: 3px;
+	font-size: .76rem;
+}
+
+.catalog-summary .summary-card strong {
+	font-size: 1.28rem;
+}
+
 .dashboard-grid {
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr));
 }
@@ -619,13 +647,15 @@ textarea:focus {
 	opacity: .82;
 }
 
-.book-cover-title {
-	max-width: 85%;
+.book-cover-mark {
+	align-self: flex-end;
+	padding-right: 18px;
+	color: rgb(255 255 255 / 22%);
 	font-family: Georgia, "Times New Roman", serif;
-	font-size: 1.12rem;
-	font-weight: 600;
-	line-height: 1.25;
-	text-wrap: balance;
+	font-size: 5rem;
+	font-weight: 700;
+	line-height: .8;
+	text-shadow: 0 2px 16px rgb(255 255 255 / 12%);
 }
 
 .book-card-content {
@@ -1268,13 +1298,13 @@ tbody tr:hover {
 	.page-shell {
 		width: min(100% - 32px, 560px);
 		min-height: calc(100vh - 132px);
-		padding: 35px 0 55px;
+		padding: 26px 0 55px;
 	}
 
 	.auth-layout {
 		min-height: auto;
 		grid-template-columns: 1fr;
-		gap: 27px;
+		gap: 21px;
 	}
 
 	.auth-intro {
@@ -1283,7 +1313,7 @@ tbody tr:hover {
 
 	.auth-intro h1 {
 		margin-bottom: 12px;
-		font-size: clamp(2.65rem, 12vw, 3.65rem);
+		font-size: clamp(2.5rem, 11vw, 3.4rem);
 	}
 
 	.auth-intro > p:not(.eyebrow) {
@@ -1292,12 +1322,24 @@ tbody tr:hover {
 	}
 
 	.auth-note {
-		margin-top: 17px;
+		margin-top: 13px;
 		font-size: .82rem;
 	}
 
 	.auth-card {
-		padding: 22px;
+		padding: 18px;
+	}
+
+	.auth-tabs {
+		margin-bottom: 18px;
+	}
+
+	.auth-card .muted {
+		margin-bottom: 17px;
+	}
+
+	.form-stack input {
+		margin-bottom: 13px;
 	}
 
 	.page-heading {
@@ -1322,6 +1364,31 @@ tbody tr:hover {
 		margin-bottom: 36px;
 		grid-template-columns: 1fr;
 		gap: 10px;
+	}
+
+	.catalog-summary {
+		margin-bottom: 25px;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 7px;
+	}
+
+	.catalog-summary .summary-card {
+		min-height: 68px;
+		padding: 10px 8px;
+		gap: 0;
+	}
+
+	.catalog-summary .summary-icon {
+		display: none;
+	}
+
+	.catalog-summary .summary-card p {
+		font-size: .68rem;
+		line-height: 1.3;
+	}
+
+	.catalog-summary .summary-card strong {
+		font-size: 1.15rem;
 	}
 
 	.summary-card {
