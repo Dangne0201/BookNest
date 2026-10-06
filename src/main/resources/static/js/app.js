@@ -5,6 +5,7 @@ import { initializeLoans } from "./loans.js";
 import { initializeReservations } from "./reservations.js";
 import { initializeAdmin } from "./admin.js";
 import { initializeProfile } from "./profile.js";
+import { initializeDashboard } from "./dashboard.js";
 
 const toast = document.querySelector("#app-feedback");
 let toastTimer;
@@ -23,16 +24,27 @@ function showToast(message, isError = false) {
 
 let loans;
 let reservations;
+const dashboard = initializeDashboard();
 const books = initializeBooks(showToast, async () => {
-	await Promise.all([loans.loadLoans(), reservations.loadReservations(), loans.loadActivity()]);
-});
+	await Promise.all([
+		loans.loadLoans(),
+		reservations.loadReservations(),
+		loans.loadActivity(),
+		dashboard.loadSummary()
+	]);
+}, () => dashboard.loadSummary());
 const members = initializeMembers(showToast);
-loans = initializeLoans(showToast, () => books.loadBooks());
+loans = initializeLoans(
+	showToast,
+	() => Promise.all([books.loadBooks(), dashboard.loadSummary()]),
+	() => dashboard.loadSummary()
+);
 reservations = initializeReservations(
 	showToast,
 	() => books.loadBooks(),
 	() => loans.loadLoans(),
-	() => loans.loadActivity()
+	() => loans.loadActivity(),
+	() => dashboard.loadSummary()
 );
 const admin = initializeAdmin(showToast);
 const profile = initializeProfile(showToast);
@@ -52,6 +64,7 @@ const auth = initializeAuth({
 		await Promise.all(jobs);
 	},
 	onLoggedOut: () => {
+		dashboard.setRole("PUBLIC");
 		books.setRole("PUBLIC");
 		loans.setRole("PUBLIC");
 		reservations.setRole("PUBLIC");
@@ -108,6 +121,8 @@ function selectWorkspaceTab(activeTab) {
 		reservations.loadReservations();
 	} else if (adminActive) {
 		admin.loadAccounts();
+	} else if (booksActive) {
+		dashboard.loadSummary();
 	}
 }
 
@@ -116,6 +131,7 @@ function applyRole(role) {
 	workspaceTabs.hidden = role === "PUBLIC";
 	membersTab.hidden = patron || role === "PUBLIC";
 	adminTab.hidden = role !== "ADMIN";
+	dashboard.setRole(role);
 	booksTab.textContent = role === "STAFF" || role === "ADMIN" ? "Kho sách" : "Danh mục";
 	loansTab.textContent = patron ? "Hoạt động của tôi" : "Mượn / Trả";
 	document.querySelector("#loans-panel h1").textContent = patron ? "Lượt mượn của tôi" : "Mượn / Trả";

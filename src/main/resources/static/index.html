@@ -95,6 +95,37 @@
 						aria-selected="false" aria-controls="admin-panel" hidden>Tài khoản</button>
 			</nav>
 			<section id="books-panel" role="tabpanel" aria-labelledby="books-tab">
+			<section id="dashboard-section" class="dashboard-section" aria-labelledby="dashboard-heading" hidden>
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow">TỔNG QUAN VẬN HÀNH</p>
+						<h2 id="dashboard-heading">Thư viện hôm nay</h2>
+						<p class="muted">Số liệu dùng chung cho toàn bộ thư viện.</p>
+					</div>
+				</div>
+				<div id="dashboard-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+				<div id="dashboard-loading" class="loading-state" role="status" hidden>
+					<span class="spinner" aria-hidden="true"></span> Đang cập nhật tổng quan…
+				</div>
+				<div id="dashboard-cards" class="summary-grid dashboard-grid">
+					<article class="summary-card">
+						<span class="summary-icon icon-green" aria-hidden="true">✓</span>
+						<div><p>Bản sách sẵn sàng</p><strong id="dashboard-available">—</strong></div>
+					</article>
+					<article class="summary-card">
+						<span class="summary-icon icon-blue" aria-hidden="true">↗</span>
+						<div><p>Đang được mượn</p><strong id="dashboard-active-loans">—</strong></div>
+					</article>
+					<article class="summary-card">
+						<span class="summary-icon icon-violet" aria-hidden="true">◷</span>
+						<div><p>Lượt mượn quá hạn</p><strong id="dashboard-overdue-loans">—</strong></div>
+					</article>
+					<article class="summary-card">
+						<span class="summary-icon icon-blue" aria-hidden="true">↔</span>
+						<div><p>Đặt trước đang chờ / được giữ</p><strong id="dashboard-reservations">—</strong></div>
+					</article>
+				</div>
+			</section>
 			<div class="page-heading">
 				<div>
 					<p class="eyebrow">THƯ VIỆN DÙNG CHUNG</p>

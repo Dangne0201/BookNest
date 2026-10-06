@@ -475,6 +475,18 @@ textarea:focus {
 	gap: 17px;
 }
 
+.dashboard-grid {
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr));
+}
+
+.dashboard-section {
+	margin-bottom: 40px;
+}
+
+.dashboard-section .section-heading {
+	margin-bottom: 16px;
+}
+
 .summary-card {
 	min-height: 112px;
 	padding: 21px;

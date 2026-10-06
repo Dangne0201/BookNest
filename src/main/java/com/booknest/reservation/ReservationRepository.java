@@ -18,6 +18,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
 	boolean existsByBookIdAndStatusIn(Long bookId, Collection<Reservation.Status> statuses);
 
+	long countByStatusIn(Collection<Reservation.Status> statuses);
+
 	@Query("select distinct reservation.book.id from Reservation reservation where reservation.status in :statuses")
 	Set<Long> findDistinctBookIdsByStatusIn(@Param("statuses") Collection<Reservation.Status> statuses);
 

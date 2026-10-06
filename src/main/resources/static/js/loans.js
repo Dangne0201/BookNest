@@ -1,6 +1,10 @@
 import { apiRequest, userMessage } from "./api.js";
 
-export function initializeLoans(showToast, onInventoryChanged) {
+export function initializeLoans(
+	showToast,
+	onInventoryChanged,
+	onDashboardChanged = () => Promise.resolve()
+) {
 	const loansList = document.querySelector("#loans-list");
 	const loansTable = document.querySelector("#loans-table-wrap");
 	const loansEmpty = document.querySelector("#loans-empty");
@@ -401,11 +405,11 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		button.disabled = true;
 		try {
 			const renewedLoan = await apiRequest(`/api/loans/${loan.id}/renew`, { method: "POST" });
-			await Promise.all([loadLoans(), loadActivity()]);
+			await Promise.all([loadLoans(), loadActivity(), onDashboardChanged()]);
 			showToast(`Đã gia hạn. Hạn trả mới: ${formatDate(renewedLoan.dueDate)}.`);
 		} catch (error) {
 			showToast(userMessage(error), true);
-			await Promise.all([loadLoans(), loadActivity()]);
+			await Promise.all([loadLoans(), loadActivity(), onDashboardChanged()]);
 		} finally {
 			button.disabled = false;
 		}

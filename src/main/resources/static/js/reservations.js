@@ -1,6 +1,12 @@
 import { apiRequest, userMessage } from "./api.js";
 
-export function initializeReservations(showToast, onBooksChanged, onLoansChanged, onActivityChanged = () => Promise.resolve()) {
+export function initializeReservations(
+	showToast,
+	onBooksChanged,
+	onLoansChanged,
+	onActivityChanged = () => Promise.resolve(),
+	onDashboardChanged = () => Promise.resolve()
+) {
 	const list = document.querySelector("#reservations-list");
 	const empty = document.querySelector("#reservations-empty");
 	const feedback = document.querySelector("#reservations-feedback");
@@ -45,7 +51,8 @@ export function initializeReservations(showToast, onBooksChanged, onLoansChanged
 						loadReservations(),
 						onBooksChanged(),
 						onLoansChanged(),
-						onActivityChanged()
+						onActivityChanged(),
+						onDashboardChanged()
 					]);
 				} catch (error) {
 					showToast(userMessage(error), true);
@@ -66,7 +73,12 @@ export function initializeReservations(showToast, onBooksChanged, onLoansChanged
 				cancel.disabled = true;
 				try {
 					await apiRequest(`/api/reservations/${reservation.id}`, { method: "DELETE" });
-					await Promise.all([loadReservations(), onBooksChanged(), onActivityChanged()]);
+					await Promise.all([
+						loadReservations(),
+						onBooksChanged(),
+						onActivityChanged(),
+						onDashboardChanged()
+					]);
 					showToast("Đã hủy yêu cầu đặt trước.");
 				} catch (error) {
 					showToast(userMessage(error), true);

@@ -21,6 +21,10 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
 	boolean existsByMemberId(Long memberId);
 
+	long countByReturnDateIsNull();
+
+	long countByReturnDateIsNullAndDueDateBefore(LocalDate date);
+
 	@EntityGraph(attributePaths = {
 			"member",
 			"member.account",

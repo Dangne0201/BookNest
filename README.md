@@ -101,9 +101,12 @@ All write requests require a CSRF token. `GET /api/auth/csrf` starts/continues a
 | `POST /api/loans/{loanId}/renew` | Patron (own loan), staff/admin; CSRF | Renew an eligible loan once; add 14 days to its current due date |
 | `/api/reservations/**` | Patron/staff/admin; CSRF for writes | Join, view, cancel, and fulfill reservation queues |
 | `GET /api/activity` | Authenticated | Search/page recent lifecycle events; patrons see only their own |
+| `GET /api/dashboard` | Staff/admin | Read shared available-copy, active/overdue-loan, and active-reservation counts |
 | `/api/admin/accounts/**` | Admin, CSRF for writes | List accounts, provision staff, and reset patron/staff passwords |
 
 Admin self-recovery is intentionally not exposed as a web endpoint; it is the local Docker Compose command above.
+
+The dashboard reports counts for `availableCopies`, `activeLoans`, `overdueLoans`, and `activeReservations`. Active loans have no return date; overdue loans are the active subset with a due date before today. Active reservations include both waiting and held requests. Counts are queried from the database and shared across staff/admin accounts; patrons continue to see only their own borrowing and reservation information.
 
 Paged list responses contain `items`, zero-based `page`, `size`, `totalElements`, `totalPages`, `first`, and `last`. The default page size is 20 and the maximum is 100. Book filters accept `q`, `genre`, and `availability` (`AVAILABLE` or `UNAVAILABLE`); book sort fields are `title`, `author`, `genre`, `publicationYear`, and `id`. Loan filters accept `q` and `state` (`ACTIVE`, `OVERDUE`, or `RETURNED`); loan sort fields are `checkoutDate`, `dueDate`, `returnDate`, `bookTitle`, and `memberName`. Both accept `page`, `size`, `sort`, and `direction` (`asc` or `desc`). Activity accepts `q`, `type`, `page`, and `size`; it is ordered newest first.
 
@@ -125,10 +128,10 @@ macOS/Linux:
 ./mvnw --no-transfer-progress clean verify
 ```
 
-Automated tests cover registration, roles and authorization, profile ownership, temporary-password flows, reset/session invalidation, CSRF, books/copies, members, checkout/return, one-time renewal eligibility and attribution, concurrent checkout/renewal, renewal-versus-queue serialization, and reservation queue behavior.
+Automated tests cover registration, roles and authorization, profile ownership, temporary-password flows, reset/session invalidation, CSRF, books/copies, members, checkout/return, one-time renewal eligibility and attribution, concurrent checkout/renewal, renewal-versus-queue serialization, reservation queue behavior, and dashboard metrics/access.
 
 ## Current scope
 
-The responsive interface uses same-origin HTML/CSS/JavaScript and does not store passwords or patron data in browser storage. Book and loan search/filter/sort use database-backed pagination; the activity timeline is paginated. A dashboard is not implemented yet. There is no frontend framework, cloud deployment, email service, OAuth, JWT, or microservice architecture.
+The responsive interface uses same-origin HTML/CSS/JavaScript and does not store passwords or patron data in browser storage. Book and loan search/filter/sort use database-backed pagination; the activity timeline is paginated. Staff/admin have a shared operational dashboard; patron-facing aggregate statistics are intentionally omitted. There is no frontend framework, cloud deployment, email service, OAuth, JWT, or microservice architecture.
 
 See [PHASE_CHECKLIST.md](PHASE_CHECKLIST.md) and [PHASE_CHECKLIST.vi.md](PHASE_CHECKLIST.vi.md) for acceptance and verification status. Project/agent context is in [AGENTS.md](AGENTS.md).

@@ -8,7 +8,11 @@ const STATUS_LABELS = {
 	ON_HOLD: "Đang được giữ"
 };
 
-export function initializeBooks(showToast, onLoansChanged = () => Promise.resolve()) {
+export function initializeBooks(
+	showToast,
+	onLoansChanged = () => Promise.resolve(),
+	onDashboardChanged = () => Promise.resolve()
+) {
 	const bookDialog = document.querySelector("#book-dialog");
 	const bookForm = document.querySelector("#book-form");
 	const bookDialogTitle = document.querySelector("#book-dialog-title");
@@ -297,6 +301,7 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 				setFeedback(copiesFeedback, "Đã cập nhật trạng thái bản sách.");
 				await loadCopies();
 				await loadBooks();
+				await onDashboardChanged();
 			} catch (error) {
 				setFeedback(copiesFeedback, userMessage(error), true);
 			} finally {
@@ -319,6 +324,7 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 				setFeedback(copiesFeedback, "Đã xóa bản sách.");
 				await loadCopies();
 				await loadBooks();
+				await onDashboardChanged();
 			} catch (error) {
 				setFeedback(copiesFeedback, userMessage(error), true);
 			} finally {
@@ -500,6 +506,7 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 			setFeedback(copiesFeedback, "Đã thêm bản sách.");
 			await loadCopies();
 			await loadBooks();
+			await onDashboardChanged();
 		} catch (error) {
 			setFeedback(copiesFeedback, userMessage(error), true);
 		} finally {

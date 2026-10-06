@@ -570,3 +570,36 @@ This phase adds an append-only activity timeline and database-backed discovery f
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — document API/UI behavior and verified outcomes.
 
 **State:** Accepted by the user on 2026-10-06 and published as commit `a100990`. `.\mvnw.cmd --no-transfer-progress clean verify` passed 59 tests with 0 failures/errors/skips. JavaScript syntax, `git diff --check`, `docker compose config --quiet`, Compose rebuild, V9 migration, HTTP 200 app/database readiness, PostgreSQL catalog/search/loan/activity queries, and staff/patron browser flows passed. Existing PostgreSQL rows were preserved. The previously tracked signed-in account-bar overflow at a 360px viewport remains outside this phase.
+
+### Phase 7 — Shared-library dashboard
+
+This phase adds a compact operational overview for staff and administrators. Per the user's decision, patrons do not receive aggregate operational counts and continue using their own loan/reservation/activity screens.
+
+#### Approved implementation scope
+
+- Add an authenticated dashboard summary endpoint restricted to `STAFF` and `ADMIN`. Use existing persistent data only; no demo data or schema migration.
+- Return counts for available copies, active loans, overdue active loans, and active reservations. A loan is active when it has no return date; overdue is the active subset whose due date is before today. Active reservations include `WAITING` and `HELD`; therefore overdue loans are included within (not added to) active-loan counts.
+- Calculate counts with database aggregate/count queries; do not load unbounded records into application memory. Empty installations return zero for every count.
+- Show the shared counts in a readable overview for staff/admin and hide the operational dashboard from patrons and public users. Keep the existing catalog page counts distinct from shared totals.
+- Refresh the summary after relevant inventory, checkout, return, renewal, reservation, and reservation-hold changes, and when staff/admin sign in or return to the dashboard view. Show accessible loading and safe error states.
+- Document the API and count definitions. Do not add charts, date ranges, export, or patron aggregate analytics.
+
+#### Acceptance checks
+
+- [x] The dashboard reports accurate counts for available copies, active/overdue loans, and waiting/held reservations; returned loans and cancelled/fulfilled reservations are excluded as appropriate.
+- [x] Empty data returns zero counts, and ordinary changes refresh the visible summary without a full-page reload.
+- [x] Staff/admin can retrieve the same shared metrics; patrons and anonymous callers cannot access the operational summary.
+- [x] Counts are computed in the database without fetching full loan/copy/reservation lists.
+- [x] Tests cover status boundaries, role access, zero counts, and metric updates after lifecycle mutations.
+- [x] README, AGENTS.md, and both bilingual checklists record the endpoint, definitions, exact verification outcomes, and any limitations.
+
+#### Anticipated file ledger
+
+- [x] `src/main/java/com/booknest/dashboard/DashboardController.java`, `DashboardService.java`, and `DashboardSummary.java` — authorized endpoint, count aggregation, and stable response shape.
+- [x] `src/main/java/com/booknest/book/BookCopyRepository.java`, `loan/LoanRepository.java`, and `reservation/ReservationRepository.java` — efficient status-aware database counts.
+- [x] `src/main/java/com/booknest/security/SecurityConfig.java` — staff/admin-only dashboard authorization.
+- [x] `src/main/resources/static/index.html`, `css/styles.css`, `js/dashboard.js`, and `js/app.js` — responsive overview and role-aware refresh/error states.
+- [x] `src/test/java/com/booknest/dashboard/DashboardControllerTests.java` — counts, status boundaries, zero values, and role authorization.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — API contract, accepted scope, implementation ledger, and verified results.
+
+**State:** Accepted by the user on 2026-10-06 and published to GitHub. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips); JavaScript syntax checks, `git diff --check`, and `docker compose config --quiet` passed. Compose rebuilt against the existing PostgreSQL volume; app and database readiness returned HTTP 200/UP, with V9 still the latest migration and no schema change. The STAFF browser session showed all four dashboard values; API response `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3` matched direct PostgreSQL counts `2|3|1|3`. Anonymous API access returned 401; the PATRON browser session showed no operational dashboard and API access returned 403. No data or volume was reset.

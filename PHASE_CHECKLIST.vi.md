@@ -571,3 +571,36 @@ Phase này bổ sung timeline hoạt động chỉ-ghi-thêm và khả năng tì
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — tài liệu hóa API/UI và kết quả kiểm chứng.
 
 **Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06; đã xuất bản trong commit `a100990`. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 59 test, 0 lỗi/failure/skip. JavaScript syntax, `git diff --check`, `docker compose config --quiet`, rebuild Compose, migration V9, readiness HTTP 200 của app/DB, query PostgreSQL cho catalog/search/loan/activity, và browser flow staff/patron đều đạt. Dữ liệu PostgreSQL hiện có được giữ nguyên. Tình trạng account bar gây tràn ngang ở viewport 360px đã được ghi nhận từ phase trước và nằm ngoài phạm vi Phase 6.
+
+### Phase 7 — Dashboard thư viện dùng chung
+
+Phase này bổ sung bảng tổng quan vận hành gọn dành cho nhân viên và admin. Theo lựa chọn của người dùng, patron không xem số liệu vận hành tổng hợp mà tiếp tục dùng màn lượt mượn/đặt trước/hoạt động cá nhân.
+
+#### Phạm vi đã được duyệt
+
+- Thêm endpoint tóm tắt dashboard yêu cầu đăng nhập, chỉ cho `STAFF` và `ADMIN`. Dùng dữ liệu đang có; không seed demo và không migration schema.
+- Trả số lượng bản sách sẵn sàng, lượt mượn đang hoạt động, lượt mượn quá hạn đang hoạt động, và yêu cầu đặt trước còn hiệu lực. Loan đang hoạt động khi chưa có ngày trả; quá hạn là phần loan đang hoạt động có hạn trả trước hôm nay. Reservation còn hiệu lực gồm `WAITING` và `HELD`; do đó loan quá hạn là một phần của tổng loan đang mượn, không cộng thêm vào số loan đang hoạt động.
+- Tính count bằng truy vấn tổng hợp/count ở database; không tải danh sách không giới hạn vào bộ nhớ ứng dụng. Thư viện trống trả 0 cho mọi số liệu.
+- Hiển thị số liệu dùng chung trong khu tổng quan cho staff/admin; ẩn dashboard vận hành với patron và khách chưa đăng nhập. Tách biệt các con số danh mục đang hiển thị theo trang/lọc hiện tại.
+- Làm mới dashboard sau thay đổi tồn kho, mượn, trả, gia hạn, đặt trước và giữ sách; đồng thời tải khi staff/admin đăng nhập hoặc quay lại dashboard. Có trạng thái loading/lỗi accessible và an toàn.
+- Tài liệu hóa API và định nghĩa số liệu. Không thêm biểu đồ, khoảng thời gian, xuất file hay phân tích tổng hợp patron.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Dashboard đếm đúng bản sách sẵn sàng, loan đang mượn/quá hạn và reservation đang chờ/được giữ; loại loan đã trả và reservation đã hủy/hoàn tất phù hợp.
+- [x] Thư viện trống trả số 0; thay đổi nghiệp vụ cập nhật số liệu đang hiển thị mà không tải lại toàn trang.
+- [x] Staff/admin lấy được cùng số liệu dùng chung; patron và anonymous không thể truy cập dashboard vận hành.
+- [x] Count được tính trong database, không tải toàn bộ danh sách loan/copy/reservation.
+- [x] Test bao phủ ranh giới trạng thái, quyền theo vai trò, số 0 và cập nhật chỉ số sau thay đổi nghiệp vụ.
+- [x] README, AGENTS.md và checklist song ngữ ghi endpoint, định nghĩa chỉ số, kết quả kiểm chứng cụ thể và giới hạn nếu có.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/java/com/booknest/dashboard/DashboardController.java`, `DashboardService.java` và `DashboardSummary.java` — endpoint có phân quyền, tổng hợp count, cấu trúc response ổn định.
+- [x] `src/main/java/com/booknest/book/BookCopyRepository.java`, `loan/LoanRepository.java` và `reservation/ReservationRepository.java` — truy vấn count database hiệu quả, xét đúng trạng thái.
+- [x] `src/main/java/com/booknest/security/SecurityConfig.java` — chỉ staff/admin được gọi dashboard.
+- [x] `src/main/resources/static/index.html`, `css/styles.css`, `js/dashboard.js` và `js/app.js` — tổng quan responsive, refresh/error theo vai trò.
+- [x] `src/test/java/com/booknest/dashboard/DashboardControllerTests.java` — số liệu, ranh giới trạng thái, số 0 và authorization.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — hợp đồng API, phạm vi đã duyệt, ledger và kết quả kiểm chứng.
+
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và Phase đã được xuất bản lên GitHub. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); kiểm tra cú pháp JavaScript, `git diff --check` và `docker compose config --quiet` đều đạt. Compose đã build lại trên volume PostgreSQL hiện có; readiness của app và database trả HTTP 200/UP, V9 vẫn là migration mới nhất và không có thay đổi schema. Phiên trình duyệt STAFF hiển thị đủ bốn số liệu; API trả `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3`, khớp truy vấn count trực tiếp PostgreSQL `2|3|1|3`. API anonymous trả 401; phiên PATRON không có dashboard vận hành và API trả 403. Không reset dữ liệu hay volume.
