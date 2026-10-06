@@ -1,6 +1,6 @@
 # BookNest
 
-BookNest is a shared-library portfolio application. Visitors can browse the catalog; patrons register themselves, manage their own profile, borrow available copies, join/cancel reservation queues, and see only their own activity. Staff manage library inventory, members, and physical returns. A single administrator manages staff accounts and password recovery.
+BookNest is a Java portfolio application for managing one shared library. Visitors can browse the catalog; patrons register themselves, manage their own profile, borrow available copies, join/cancel reservation queues, renew eligible loans, and see only their own activity. Staff manage the shared inventory, walk-in member records, and physical returns. An administrator provisions staff accounts and issues verified temporary passwords.
 
 ## Stack
 
@@ -11,15 +11,48 @@ BookNest is a shared-library portfolio application. Visitors can browse the cata
 - Plain HTML, CSS, and JavaScript
 - Docker Compose
 
+## What is implemented
+
+- Public, searchable book catalog with individual copy availability.
+- Patron self-registration and linked member profile; profile, loan, reservation, and activity views are scoped to the signed-in patron.
+- Staff workflows for books/copies, unlinked walk-in members, checkout, physical return, reservation queues, and a shared operations dashboard.
+- Admin-only staff-account provisioning and verified patron/staff password resets; temporary passwords must be changed at sign-in.
+- Database-backed book/loan pagination and an activity timeline for loan and reservation lifecycle actions.
+
+The app is a same-origin Spring MVC/API plus static HTML/CSS/JavaScript application. Each PostgreSQL database represents one shared library; accounts do not own separate inventories.
+
+```text
+Browser (HTML/CSS/JavaScript)
+          | same-origin HTTP, session cookie, CSRF
+          v
+Spring Boot (controllers -> services -> repositories)
+          | JPA/Hibernate; Flyway migrations
+          v
+PostgreSQL (accounts, books/copies, members, loans,
+            reservations, activity snapshots)
+```
+
+Core relationships: a `Book` has physical `BookCopy` rows; a `Member` can have a linked patron account or be an unlinked walk-in record; a `Loan` connects one member to one copy and stores checkout/due/return dates and actors; a `Reservation` connects a member to a title and may hold a copy; activity rows keep lifecycle snapshots without owning or replacing the business records.
+
 ## Run locally
 
 Requirements: Git and Docker Desktop with Docker Compose.
 
+Optional local environment file:
+
 ```powershell
-docker compose up --build
+Copy-Item .env.example .env
 ```
 
-Open <http://localhost:8080/>. The application is bound to loopback only; PostgreSQL is not published as a host port. Compose's default credentials are for local development only and must not be reused for a public deployment. `.env.example` can be copied to `.env` for local configuration; `.env` is ignored by Git.
+Start the app and database:
+
+```powershell
+docker compose up --build -d
+```
+
+Open <http://localhost:8080/>. Compose waits for PostgreSQL health before starting the app. The app binds to loopback (`127.0.0.1`); PostgreSQL is not published as a host port. Compose uses the named `booknest-postgres-data` volume so ordinary stop/restart and application rebuilds preserve database data.
+
+The fallback database username/password in Compose and `.env.example` are local-development values only. Keep `.env` private (it is ignored by Git); do not use these values or the demo accounts for an internet-facing deployment.
 
 ### First administrator setup and recovery
 
@@ -41,7 +74,26 @@ There is no email-based recovery. A patron or staff member must contact the libr
 4. Staff accounts are provisioned by the administrator. Staff maintain books/copies and member records, and confirm physical returns.
 5. Admins use **Tài khoản** to provision staff accounts or reset a verified patron/staff account. Temporary passwords are shown once and require a change at the next sign-in.
 
-Demo data is disabled by default. To initialize a local sample library, explicitly enable it before starting Compose:
+Demo data is disabled by default. See [Local demo data](#local-demo-data) for opt-in seeding instructions and local-only credentials.
+
+Stop services without deleting data:
+
+```powershell
+docker compose down
+```
+
+**Destructive local reset — warning:** this deletes the PostgreSQL data volume, including all accounts, books, copies, members, loans, reservations, and activity in this local BookNest installation. Back up anything you need first. Only run it when you intentionally want to erase BookNest's local database:
+
+```powershell
+docker compose down -v
+docker compose up --build -d
+```
+
+The reset uses this Compose project and its named BookNest volume; it is not needed for normal shutdown, application rebuilds, schema migrations, or account recovery. Do not use Docker-wide prune commands. Migrations are forward-only; take a database backup before manual database operations.
+
+## Local demo data
+
+Demo data is **off by default**. To seed the local database once, opt in for the startup:
 
 ```powershell
 $env:BOOKNEST_DEMO_DATA_ENABLED = "true"
@@ -50,9 +102,7 @@ Remove-Item Env:BOOKNEST_DEMO_DATA_ENABLED
 docker compose up -d
 ```
 
-The first command starts the app with demo initialization enabled; the final command recreates the app with the default-off setting after the seed is recorded. The initializer adds sample accounts, linked patron profiles, a walk-in member, *The Pragmatic Programmer*, *Clean Code*, and *The Hobbit* with copies in several inventory states, active/overdue/returned loans, and held/waiting/cancelled/fulfilled reservations. It does not create an administrator. The seed is repeat-safe and does not delete existing records; once inserted, demo rows remain in the PostgreSQL volume even if the option is later disabled. Do not enable this option outside a local/demo environment.
-
-Demo sign-in credentials (local use only):
+The seed creates one sample staff account, two patron accounts with linked profiles, one walk-in member, three titles with copies in several states, representative active/overdue/returned loans, and held/waiting/cancelled/fulfilled reservations. It does not create or reset an administrator. A database marker makes initialization repeat-safe: later starts do not duplicate or overwrite demo or user-edited records. Disabling the option after seeding does not remove the seeded records; a deliberate database reset is required to erase them.
 
 | Role | Username | Password |
 | --- | --- | --- |
@@ -60,15 +110,7 @@ Demo sign-in credentials (local use only):
 | Patron | `demo-patron` | `BookNestDemoReader2026!` |
 | Patron | `demo-patron-two` | `BookNestDemoReaderTwo2026!` |
 
-These public demo credentials are unsuitable for any public deployment. They are stored in the database only as BCrypt hashes. To try checkout as a patron, sign in as either demo patron; for catalog/member/loan management, sign in as demo staff. Loans are due 14 calendar days after checkout. When a copy is returned, it is held for the first eligible patron in the FIFO queue.
-
-Stop services without deleting data:
-
-```powershell
-docker compose down
-```
-
-Do not remove the `booknest-postgres-data` volume to apply migrations or recover an account. Back up the database before any manual database operation. Migrations are forward-only.
+These published sample credentials are intentionally convenient for local exploration only. Never enable demo seeding or use these credentials in a public deployment.
 
 ## Access and security
 
@@ -112,9 +154,114 @@ Paged list responses contain `items`, zero-based `page`, `size`, `totalElements`
 
 The activity timeline records checkout, return, renewal, and reservation placement/hold/cancellation/fulfillment from migration V9 onward. It keeps safe snapshots of the acting username and relevant book/member details without creating foreign-key dependencies. Earlier loan details remain available from loan records; historical reservation transitions are not backfilled.
 
+### Example API requests
+
+All writes require the server-side session cookie and CSRF header. First request the token; keep the returned session cookie and send the returned `token` in the returned `headerName` for each write. The examples use placeholders rather than credentials:
+
+```http
+GET /api/auth/csrf
+```
+
+```json
+{"headerName":"X-CSRF-TOKEN","token":"<csrf-token>"}
+```
+
+Register a patron (the server creates and links the borrowing profile):
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+X-CSRF-TOKEN: <csrf-token>
+Cookie: JSESSIONID=<session-cookie>
+
+{
+  "username": "reader-example",
+  "password": "<choose-a-local-password>",
+  "fullName": "Example Reader",
+  "email": null,
+  "phone": null,
+  "notes": null
+}
+```
+
+The response is `201 Created`, for example:
+
+```json
+{"id":42,"username":"reader-example","role":"PATRON","memberId":42,"passwordChangeRequired":false}
+```
+
+Login uses URL-encoded form fields (not a JSON request body):
+
+```http
+POST /api/auth/login
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: <csrf-token>
+Cookie: JSESSIONID=<session-cookie>
+
+username=reader-example&password=<chosen-password>
+```
+
+Successful sign-in returns `200 OK`; `GET /api/auth/me` returns the current account and role. A patron borrows an available copy without supplying a member/account ID—the server resolves the linked profile from the authenticated session:
+
+```http
+POST /api/loans
+Content-Type: application/json
+X-CSRF-TOKEN: <csrf-token>
+Cookie: JSESSIONID=<session-cookie>
+
+{"copyId":17}
+```
+
+Staff can create a book title; physical copies are added separately through `/api/books/{bookId}/copies`:
+
+```http
+POST /api/books
+Content-Type: application/json
+X-CSRF-TOKEN: <csrf-token>
+Cookie: JSESSIONID=<session-cookie>
+
+{
+  "title": "Example Book",
+  "author": "Example Author",
+  "isbn": null,
+  "genre": "Fiction",
+  "publicationYear": 2025,
+  "description": null
+}
+```
+
+This returns `201 Created` with the saved title and derived inventory counts, for example `{"id":5,"title":"Example Book","author":"Example Author","isbn":null,"genre":"Fiction","publicationYear":2025,"description":null,"totalCopies":0,"availableCopies":0}`.
+
+Staff checkout supplies the selected walk-in or linked member explicitly, while the acting account still comes from the session:
+
+```json
+{"memberId":8,"copyId":17}
+```
+
+Checkout returns `201 Created` with a loan record containing the derived due date, active/overdue state, and server-recorded actor. Return and renewal use `POST /api/loans/{loanId}/return` and `POST /api/loans/{loanId}/renew`; both require CSRF and return the updated loan. A patron may act only on their own loan; physical returns require staff/admin. Renewal is allowed once, only when the loan is eligible.
+
+Join a title's reservation queue (patron `memberId` is server-derived):
+
+```http
+POST /api/reservations
+Content-Type: application/json
+X-CSRF-TOKEN: <csrf-token>
+Cookie: JSESSIONID=<session-cookie>
+
+{"bookId":5}
+```
+
+`GET /api/books?q=clean&page=0&size=20&sort=title&direction=asc` is public and returns a page with `items`, `page`, `size`, `totalElements`, `totalPages`, `first`, and `last`. Book and loan page sizes are limited to 1–100. For example, `GET /api/dashboard` is staff/admin-only and returns:
+
+```json
+{"availableCopies":2,"activeLoans":3,"overdueLoans":1,"activeReservations":3}
+```
+
+Unauthenticated protected requests return `401`; authenticated callers without the required role receive `403`. Validation/conflict responses use safe error codes/messages rather than exposing stack traces.
+
 ## Tests
 
-The test profile uses an in-memory H2 database and runs all Flyway migrations.
+The Maven test profile uses an in-memory H2 database and runs all Flyway migrations; it does not start PostgreSQL or Docker. Docker Desktop and Compose are required for the local full-stack run described above.
 
 Windows:
 
@@ -130,8 +277,13 @@ macOS/Linux:
 
 Automated tests cover registration, roles and authorization, profile ownership, temporary-password flows, reset/session invalidation, CSRF, books/copies, members, checkout/return, one-time renewal eligibility and attribution, concurrent checkout/renewal, renewal-versus-queue serialization, reservation queue behavior, and dashboard metrics/access.
 
-## Current scope
+## Design decisions and limitations
 
-The responsive interface uses same-origin HTML/CSS/JavaScript and does not store passwords or patron data in browser storage. Book and loan search/filter/sort use database-backed pagination; the activity timeline is paginated. Staff/admin have a shared operational dashboard; patron-facing aggregate statistics are intentionally omitted. There is no frontend framework, cloud deployment, email service, OAuth, JWT, or microservice architecture.
+- Keep the UI in plain same-origin HTML/CSS/JavaScript to match the portfolio's learning goals and avoid a separate frontend build/deployment.
+- Use server-side sessions, HTTP-only cookies, CSRF, and BCrypt rather than JWT/OAuth; ownership and role checks are enforced in backend services and queries, not just by hiding UI controls.
+- Keep the library shared within one database. JPA plus PostgreSQL constraints, transactions, row locking, and a uniqueness guard protect loan/queue consistency without adding a message broker or distributed architecture.
+- Use bounded, database-backed pagination and allowlisted sort fields rather than loading all records into memory.
+- This is a learning portfolio, not a production-ready library platform. There is no email delivery/account recovery, reservation expiry scheduler, multi-library tenancy, cloud deployment, high-availability setup, or comprehensive operational monitoring. Admin bootstrap/recovery requires host access and emits a temporary password once. The activity timeline starts at V9 and does not invent earlier reservation history. Demo rows remain in the volume until that local volume is deliberately reset.
+- The Compose defaults, public demo credentials, and local admin-recovery workflow are for local review only; do not expose this setup as a public service.
 
 See [PHASE_CHECKLIST.md](PHASE_CHECKLIST.md) and [PHASE_CHECKLIST.vi.md](PHASE_CHECKLIST.vi.md) for acceptance and verification status. Project/agent context is in [AGENTS.md](AGENTS.md).

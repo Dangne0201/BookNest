@@ -637,3 +637,32 @@ The existing incremental UI slices cover the public catalog, patron profile and 
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — maintain the per-file ledger and exact verification/acceptance state.
 
 **State:** Accepted by the user on 2026-10-06 and published to GitHub. The user explicitly accepted the two recorded verification limitations: a live ADMIN UI session and complete keyboard-dialog/focus/confirmation coverage. Responsive CSS and the book-list listener fix are implemented and verified; full `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips), all static JS files passed `node --check`, Compose config/build passed, and readiness is UP/UP. Browser checks confirmed no document overflow at 360/375/768/1280px for STAFF and at 360px for PATRON; the 920px loan table scrolls inside its wrapper while the document remains 345px wide at 360px. Staff navigation showed 4 members, 5 loans, 6 reservation cards, and dashboard values `2/3/1/3`; patron saw only own loan/held reservation/profile with staff/admin tabs and dashboard hidden. Staff received 403 from `/api/admin/accounts`; anonymous users receive 401 where checked. One book search generated exactly one API request; a simulated 503 displayed the expected error. Existing PostgreSQL counts remained `6/4/9/4/5/6` (accounts/books/copies/members/loans/reservations). No admin credential was reset.
+
+### Phase 9 — Reviewer documentation and demo setup
+
+The opt-in, idempotent local demo initializer is already implemented and verified as a focused earlier slice. This phase completes reviewer-facing documentation only: make the real startup, roles, data model, API examples, test commands, design decisions, limitations, and destructive reset warning easy to understand. Do not alter seed behavior, credentials, schema, or application behavior.
+
+#### Approved implementation scope
+
+- Update README with a concise project summary, implemented capabilities, stack, system/data model overview, role boundaries, key business policies, design trade-offs, and honest non-production limitations.
+- Document the exact one-command Compose startup, URL/loopback behavior, clean shutdown preserving the named volume, `.env.example` setup, where to find demo credentials, opt-in sample initialization, restart/idempotency behavior, and the warned destructive reset procedure without running it.
+- Add concise representative request/response examples for major implemented API flows, including CSRF-aware writes and the role/access model. Examples must match current DTOs, endpoints, status codes, and authorization.
+- Explain both Maven Wrapper test commands and Docker requirements; do not imply Docker Compose runs the full test suite.
+- Keep demo passwords and local fallback database credentials explicitly local-only; never expose or add real secrets. Do not change `.env.example`, Compose defaults, code, database, container/volume state, or add dependencies during this docs phase.
+- Update this bilingual checklist and `AGENTS.md` with exact documentation validation; no code tests are required for documentation-only edits unless documentation tests exist.
+
+#### Acceptance checks
+
+- [x] A fresh reviewer can follow README from prerequisites through Compose startup, reach the app, create/recover an admin using the documented safe path, and understand how to access local demo accounts.
+- [x] Demo seeding is clearly opt-in, repeat-safe, shared once per database, disabled by default, and never creates an admin; public demo credentials and local Compose credentials are warned as unsafe for public deployment.
+- [x] README explains normal shutdown separately from the explicitly warned, data-destroying local reset and does not instruct deleting unrelated Docker resources.
+- [x] Architecture/data relationships, role boundaries, borrowing/renewal/queue rules, key trade-offs, and actual limitations agree with implementation and do not imply production readiness.
+- [x] Representative API requests/responses, CSRF requirements, roles, pagination/filter parameters, and health/testing instructions match current contracts.
+- [x] Documentation-only review finds no unverified claims, stale phase status, real secrets, or accidental changes to app/deployment/database behavior.
+
+#### Anticipated file ledger
+
+- [x] `README.md` — reviewer setup, system/data model, demo and reset guidance, representative API examples, testing, decisions, and limitations.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — accurate Phase 9 scope, bilingual ledger, and verification status.
+
+**State:** Implemented on 2026-10-06; awaiting user acceptance. README now describes the project and implemented scope, architecture/data relationships, local Compose setup and volume, admin recovery, opt-in demo seeding and credentials, safe shutdown and warned destructive reset, role/security rules, API examples and response shapes, pagination, tests, design choices, and limitations. `git diff --check` and `docker compose config --quiet` passed. No application code, seed, credentials, database rows, containers, or volumes were changed for Phase 9. No Maven suite was run because this phase changed documentation only; the latest verified suite remains 62 passing tests from Phase 8.

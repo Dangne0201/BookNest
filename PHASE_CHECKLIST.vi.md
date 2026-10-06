@@ -638,3 +638,32 @@ Các lát cắt UI tăng dần hiện đã bao gồm danh mục công khai, hồ
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — cập nhật ledger từng file và trạng thái kiểm chứng/nghiệm thu thực tế.
 
 **Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và Phase đã được xuất bản lên GitHub. Người dùng chấp nhận rõ hai giới hạn kiểm chứng đã ghi nhận: chưa có phiên ADMIN thật để kiểm tra giao diện và chưa kiểm tra đầy đủ dialog/focus/xác nhận chỉ bằng bàn phím. CSS responsive và sửa listener danh sách sách đã hoàn tất; `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip), mọi file JS tĩnh đạt `node --check`, Compose config/build đạt và readiness là UP/UP. Browser xác nhận không tràn trang ở 360/375/768/1280px cho STAFF và 360px cho PATRON; bảng loan rộng 920px chỉ cuộn trong wrapper còn trang vẫn rộng 345px tại viewport 360px. Điều hướng STAFF hiển thị 4 thành viên, 5 lượt mượn, 6 thẻ reservation và dashboard `2/3/1/3`; PATRON chỉ thấy loan/reservation/hồ sơ của mình, ẩn tab staff/admin và dashboard. STAFF gọi `/api/admin/accounts` nhận 403; anonymous nhận 401 ở endpoint đã kiểm tra. Tìm kiếm sách tạo đúng một request; lỗi 503 mô phỏng hiển thị thông báo phù hợp. Số bản ghi PostgreSQL giữ nguyên `6/4/9/4/5/6` (account/book/copy/member/loan/reservation). Không reset mật khẩu admin.
+
+### Phase 9 — Tài liệu cho reviewer và hướng dẫn dữ liệu demo
+
+Trình khởi tạo dữ liệu demo local bật tùy chọn, an toàn khi chạy lặp đã được triển khai và kiểm chứng ở một lát cắt trước đó. Phase này chỉ hoàn thiện tài liệu dành cho reviewer: hướng dẫn chạy thực tế, vai trò, mô hình dữ liệu, ví dụ API, lệnh test, trade-off và cảnh báo giới hạn. Không đổi hành vi seed, thông tin đăng nhập, schema hay ứng dụng.
+
+#### Phạm vi triển khai đã duyệt
+
+- Cập nhật README với giới thiệu ngắn, chức năng đã triển khai, stack, tổng quan hệ thống/mô hình dữ liệu, phân quyền, chính sách nghiệp vụ chính, trade-off và giới hạn trung thực, không quảng bá production-ready.
+- Ghi đúng hướng dẫn Compose chạy một lệnh, URL/hành vi chỉ bind loopback, dừng an toàn không xóa volume, thiết lập `.env.example`, nơi đọc tài khoản demo, cách bật dữ liệu mẫu, tính idempotent khi khởi động lại và quy trình reset destructive có cảnh báo nhưng không chạy.
+- Thêm ví dụ request/response tiêu biểu cho các luồng API đã có, gồm ghi dữ liệu có CSRF và phân quyền; ví dụ phải khớp DTO, endpoint, status code và access thực tế.
+- Giải thích lệnh test Maven Wrapper và yêu cầu Docker; không nói Compose tự chạy toàn bộ test suite.
+- Ghi rõ mật khẩu demo và credential PostgreSQL local mặc định chỉ dùng local; không đưa secret thật vào tài liệu. Trong phase tài liệu này không sửa `.env.example`, cấu hình Compose, code, database, container/volume, hoặc thêm dependency.
+- Cập nhật checklist song ngữ và `AGENTS.md` với kiểm tra chính xác; thay đổi tài liệu thuần không cần chạy test code trừ khi repo có test tài liệu.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Reviewer mới có thể theo README từ yêu cầu cài đặt đến khởi động Compose, mở ứng dụng, tạo/khôi phục admin bằng quy trình an toàn đã ghi và hiểu cách dùng tài khoản demo local.
+- [x] Tài liệu nói rõ seed demo opt-in, idempotent, dùng chung một lần cho database, mặc định tắt và không tạo admin; credential demo công khai cùng credential local Compose được cảnh báo không dùng ở môi trường public.
+- [x] README tách biệt shutdown thông thường với quy trình reset local có xóa dữ liệu, nêu rõ nguy cơ và không hướng dẫn xóa Docker resource không liên quan.
+- [x] Tổng quan kiến trúc/liên kết dữ liệu, phân quyền, luật mượn/gia hạn/hàng chờ, trade-off và giới hạn khớp implementation, không ngụ ý sẵn sàng production.
+- [x] Request/response API mẫu, CSRF, quyền, phân trang/bộ lọc, health và test khớp hợp đồng thực tế.
+- [x] Rà soát tài liệu không còn claim chưa kiểm chứng, trạng thái phase lỗi thời, secret thật, hoặc thay đổi ngoài ý muốn tới app/deployment/database.
+
+#### Danh sách file dự kiến
+
+- [x] `README.md` — hướng dẫn reviewer, hệ thống/mô hình dữ liệu, demo/reset, ví dụ API, test, quyết định thiết kế và giới hạn.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — phạm vi Phase 9 chính xác, ledger song ngữ và kết quả xác minh.
+
+**Trạng thái:** Đã triển khai ngày 2026-10-06; chờ người dùng nghiệm thu. README hiện mô tả dự án và phạm vi đã làm, kiến trúc/liên kết dữ liệu, Compose local và volume, khôi phục admin, seed demo bật tùy chọn và credentials, shutdown an toàn cùng reset destructive có cảnh báo, vai trò/bảo mật, ví dụ API và response, phân trang, test, quyết định thiết kế và giới hạn. `git diff --check` và `docker compose config --quiet` đều đạt. Không thay đổi code ứng dụng, seed, credential, dữ liệu DB, container hoặc volume trong Phase 9. Không chạy Maven vì phase chỉ sửa tài liệu; bộ test mới nhất đã xác minh là 62 test đạt từ Phase 8.
