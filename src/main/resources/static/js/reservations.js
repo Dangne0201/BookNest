@@ -1,6 +1,6 @@
 import { apiRequest, userMessage } from "./api.js";
 
-export function initializeReservations(showToast, onBooksChanged, onLoansChanged) {
+export function initializeReservations(showToast, onBooksChanged, onLoansChanged, onActivityChanged = () => Promise.resolve()) {
 	const list = document.querySelector("#reservations-list");
 	const empty = document.querySelector("#reservations-empty");
 	const feedback = document.querySelector("#reservations-feedback");
@@ -41,7 +41,12 @@ export function initializeReservations(showToast, onBooksChanged, onLoansChanged
 				try {
 					await apiRequest(`/api/reservations/${reservation.id}/checkout`, { method: "POST" });
 					showToast("Đã mượn sách theo lượt đặt trước.");
-					await Promise.all([loadReservations(), onBooksChanged(), onLoansChanged()]);
+					await Promise.all([
+						loadReservations(),
+						onBooksChanged(),
+						onLoansChanged(),
+						onActivityChanged()
+					]);
 				} catch (error) {
 					showToast(userMessage(error), true);
 					checkout.disabled = false;
@@ -61,7 +66,7 @@ export function initializeReservations(showToast, onBooksChanged, onLoansChanged
 				cancel.disabled = true;
 				try {
 					await apiRequest(`/api/reservations/${reservation.id}`, { method: "DELETE" });
-					await Promise.all([loadReservations(), onBooksChanged()]);
+					await Promise.all([loadReservations(), onBooksChanged(), onActivityChanged()]);
 					showToast("Đã hủy yêu cầu đặt trước.");
 				} catch (error) {
 					showToast(userMessage(error), true);

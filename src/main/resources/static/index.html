@@ -109,15 +109,15 @@
 			<div class="summary-grid" aria-label="Tổng quan kho sách">
 				<article class="summary-card">
 					<span class="summary-icon icon-violet" aria-hidden="true">▤</span>
-					<div><p>Đầu sách</p><strong id="book-total">—</strong></div>
+					<div><p>Đầu sách phù hợp</p><strong id="book-total">—</strong></div>
 				</article>
 				<article class="summary-card">
 					<span class="summary-icon icon-blue" aria-hidden="true">▣</span>
-					<div><p>Tổng số bản</p><strong id="copy-total">—</strong></div>
+					<div><p>Bản sách ở trang</p><strong id="copy-total">—</strong></div>
 				</article>
 				<article class="summary-card">
 					<span class="summary-icon icon-green" aria-hidden="true">✓</span>
-					<div><p>Sẵn sàng</p><strong id="copy-available">—</strong></div>
+					<div><p>Sẵn sàng ở trang</p><strong id="copy-available">—</strong></div>
 				</article>
 			</div>
 
@@ -127,6 +127,39 @@
 					<p class="muted">Thông tin và tình trạng bản sách được chia sẻ giữa các nhân viên.</p>
 				</div>
 			</div>
+			<form id="books-search-form" class="list-controls" role="search" aria-label="Tìm và lọc sách">
+				<label>Tìm sách
+					<input id="books-query" type="search" maxlength="100" placeholder="Tên sách, tác giả hoặc ISBN">
+				</label>
+				<label>Thể loại
+					<input id="books-genre" type="text" maxlength="100" placeholder="Mọi thể loại">
+				</label>
+				<label>Tình trạng
+					<select id="books-availability">
+						<option value="">Tất cả</option>
+						<option value="AVAILABLE">Còn bản sẵn sàng</option>
+						<option value="UNAVAILABLE">Chưa có bản sẵn sàng</option>
+					</select>
+				</label>
+				<label>Sắp xếp
+					<select id="books-sort">
+						<option value="title">Tên sách</option>
+						<option value="author">Tác giả</option>
+						<option value="genre">Thể loại</option>
+						<option value="publicationYear">Năm xuất bản</option>
+					</select>
+				</label>
+				<label>Thứ tự
+					<select id="books-direction">
+						<option value="asc">Tăng dần</option>
+						<option value="desc">Giảm dần</option>
+					</select>
+				</label>
+				<div class="list-control-actions">
+					<button class="button button-primary" type="submit">Áp dụng</button>
+					<button id="books-reset" class="button button-quiet" type="button">Xóa lọc</button>
+				</div>
+			</form>
 			<div id="books-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 			<div id="books-loading" class="loading-state" role="status" hidden>
 				<span class="spinner" aria-hidden="true"></span> Đang tải danh mục…
@@ -151,6 +184,11 @@
 					<tbody id="books-list"></tbody>
 				</table>
 			</div>
+			<nav id="books-pagination" class="pagination-controls" aria-label="Phân trang danh mục sách" hidden>
+				<button id="books-previous" class="button button-quiet" type="button">Trang trước</button>
+				<span id="books-page-status" aria-live="polite"></span>
+				<button id="books-next" class="button button-quiet" type="button">Trang sau</button>
+			</nav>
 			</section>
 
 			<section id="members-panel" role="tabpanel" aria-labelledby="members-tab" hidden>
@@ -200,6 +238,38 @@
 					</button>
 				</div>
 				<div id="loans-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+				<form id="loans-search-form" class="list-controls" role="search" aria-label="Tìm và lọc lượt mượn">
+					<label>Tìm kiếm
+						<input id="loans-query" type="search" maxlength="100" placeholder="Tên sách hoặc thành viên">
+					</label>
+					<label>Trạng thái
+						<select id="loans-state">
+							<option value="">Tất cả</option>
+							<option value="ACTIVE">Đang mượn</option>
+							<option value="OVERDUE">Quá hạn</option>
+							<option value="RETURNED">Đã trả</option>
+						</select>
+					</label>
+					<label>Sắp xếp
+						<select id="loans-sort">
+							<option value="checkoutDate">Ngày mượn</option>
+							<option value="dueDate">Hạn trả</option>
+							<option value="returnDate">Ngày trả</option>
+							<option value="bookTitle">Tên sách</option>
+							<option value="memberName">Tên thành viên</option>
+						</select>
+					</label>
+					<label>Thứ tự
+						<select id="loans-direction">
+							<option value="desc">Giảm dần</option>
+							<option value="asc">Tăng dần</option>
+						</select>
+					</label>
+					<div class="list-control-actions">
+						<button class="button button-primary" type="submit">Áp dụng</button>
+						<button id="loans-reset" class="button button-quiet" type="button">Xóa lọc</button>
+					</div>
+				</form>
 				<div id="loans-loading" class="loading-state" role="status" hidden>
 					<span class="spinner" aria-hidden="true"></span> Đang tải lượt mượn…
 				</div>
@@ -224,6 +294,11 @@
 						<tbody id="loans-list"></tbody>
 					</table>
 				</div>
+				<nav id="loans-pagination" class="pagination-controls" aria-label="Phân trang lượt mượn" hidden>
+					<button id="loans-previous" class="button button-quiet" type="button">Trang trước</button>
+					<span id="loans-page-status" aria-live="polite"></span>
+					<button id="loans-next" class="button button-quiet" type="button">Trang sau</button>
+				</nav>
 				<div id="my-reservations-section">
 					<div class="section-heading">
 						<div><h2>Đặt trước / Hàng chờ</h2><p class="muted">Theo dõi các yêu cầu đặt trước của bạn.</p></div>
@@ -232,6 +307,42 @@
 					<div id="reservations-empty" class="empty-state compact" hidden><p>Chưa có yêu cầu đặt trước.</p></div>
 					<div id="reservations-list" class="reservation-list"></div>
 				</div>
+				<section id="activity-section" class="activity-section" aria-labelledby="activity-heading">
+					<div class="section-heading">
+						<h2 id="activity-heading">Lịch sử hoạt động</h2>
+						<p class="muted">Ghi nhận các thao tác mượn, trả, gia hạn và đặt trước.</p>
+					</div>
+					<form id="activity-search-form" class="list-controls" role="search" aria-label="Lọc lịch sử hoạt động">
+						<label>Tìm trong lịch sử
+							<input id="activity-query" type="search" maxlength="100" placeholder="Sách, thành viên hoặc tài khoản">
+						</label>
+						<label>Loại hoạt động
+							<select id="activity-type">
+								<option value="">Tất cả hoạt động</option>
+								<option value="LOAN_CHECKED_OUT">Mượn sách</option>
+								<option value="LOAN_RETURNED">Trả sách</option>
+								<option value="LOAN_RENEWED">Gia hạn</option>
+								<option value="RESERVATION_PLACED">Đặt trước</option>
+								<option value="RESERVATION_HELD">Giữ sách</option>
+								<option value="RESERVATION_CANCELLED">Hủy đặt trước</option>
+								<option value="RESERVATION_FULFILLED">Nhận sách</option>
+							</select>
+						</label>
+						<div class="list-control-actions">
+							<button class="button button-primary" type="submit">Áp dụng</button>
+							<button id="activity-reset" class="button button-quiet" type="button">Xóa lọc</button>
+						</div>
+					</form>
+					<div id="activity-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+					<div id="activity-loading" class="loading-state" role="status" hidden>Đang tải lịch sử…</div>
+					<div id="activity-empty" class="empty-state compact" hidden><p>Chưa có hoạt động phù hợp.</p></div>
+					<ol id="activity-list" class="activity-list" aria-live="polite"></ol>
+					<nav id="activity-pagination" class="pagination-controls" aria-label="Phân trang lịch sử hoạt động" hidden>
+						<button id="activity-previous" class="button button-quiet" type="button">Trang trước</button>
+						<span id="activity-page-status" aria-live="polite"></span>
+						<button id="activity-next" class="button button-quiet" type="button">Trang sau</button>
+					</nav>
+				</section>
 			</section>
 			<section id="admin-panel" role="tabpanel" aria-labelledby="admin-tab" hidden>
 				<div class="page-heading">

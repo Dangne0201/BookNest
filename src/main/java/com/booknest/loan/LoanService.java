@@ -7,13 +7,19 @@ import java.util.Set;
 import com.booknest.account.StaffAccount;
 import com.booknest.account.StaffAccountRepository;
 import com.booknest.account.StaffAccount.Role;
+import com.booknest.activity.ActivityEventType;
+import com.booknest.activity.ActivityService;
 import com.booknest.book.BookCopy;
 import com.booknest.book.BookCopyRepository;
 import com.booknest.book.BookRepository;
+import com.booknest.common.PageRequestFactory;
+import com.booknest.common.PageResponse;
 import com.booknest.member.Member;
 import com.booknest.member.MemberRepository;
 import com.booknest.reservation.Reservation;
 import com.booknest.reservation.ReservationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +36,7 @@ public class LoanService {
 	private final MemberRepository memberRepository;
 	private final StaffAccountRepository staffAccountRepository;
 	private final ReservationService reservationService;
+	private final ActivityService activityService;
 
 	public LoanService(
 			LoanRepository loanRepository,
@@ -37,7 +44,8 @@ public class LoanService {
 			BookRepository bookRepository,
 			MemberRepository memberRepository,
 			StaffAccountRepository staffAccountRepository,
-			ReservationService reservationService
+			ReservationService reservationService,
+			ActivityService activityService
 	) {
 		this.loanRepository = loanRepository;
 		this.bookCopyRepository = bookCopyRepository;
@@ -45,19 +53,56 @@ public class LoanService {
 		this.memberRepository = memberRepository;
 		this.staffAccountRepository = staffAccountRepository;
 		this.reservationService = reservationService;
+		this.activityService = activityService;
 	}
 
 	@Transactional(readOnly = true)
-	public List<LoanResponse> findAll(String username) {
+	public PageResponse<LoanResponse> findAll(
+			String username,
+			String query,
+			String state,
+			int page,
+			int size,
+			String sort,
+			String direction
+	) {
 		LocalDate today = LocalDate.now();
 		StaffAccount account = getStaff(username);
-		Set<Long> booksWithActiveReservations = reservationService.findBookIdsWithActiveReservations();
-		List<Loan> result = account.getRole() == Role.PATRON
-				? loanRepository.findAllByMemberAccountUsernameOrderByCheckoutDateDescIdDesc(username)
-				: loanRepository.findAllByOrderByCheckoutDateDescIdDesc();
-		return result.stream()
-				.map(loan -> toResponse(loan, today, booksWithActiveReservations))
+		String normalizedState = state == null || state.isBlank() ? null : state.toUpperCase(java.util.Locale.ROOT);
+		if (normalizedState != null
+				&& !normalizedState.equals("ACTIVE")
+				&& !normalizedState.equals("OVERDUE")
+				&& !normalizedState.equals("RETURNED")) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_loan_state");
+		}
+		PageRequest pageable = PageRequestFactory.create(
+				page,
+				size,
+				sort,
+				direction,
+				java.util.Map.of(
+						"checkoutDate", "checkoutDate",
+						"dueDate", "dueDate",
+						"returnDate", "returnDate",
+						"bookTitle", "bookCopy.book.title",
+						"memberName", "member.fullName"
+				),
+				"checkoutDate",
+				"desc"
+		);
+		Page<Loan> loanPage = loanRepository.search(
+				account.getRole() == Role.PATRON ? account.getId() : null,
+				query == null ? "" : query.trim(),
+				normalizedState,
+				today,
+				pageable
+		);
+		List<Long> bookIds = loanPage.getContent().stream()
+				.map(loan -> loan.getBookCopy().getBook().getId())
+				.distinct()
 				.toList();
+		Set<Long> booksWithActiveReservations = reservationService.findBookIdsWithActiveReservations(bookIds);
+		return PageResponse.from(loanPage.map(loan -> toResponse(loan, today, booksWithActiveReservations)));
 	}
 
 	@Transactional(readOnly = true)
@@ -70,7 +115,8 @@ public class LoanService {
 				|| !loan.getMember().getAccount().getUsername().equals(username))) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "loan_not_found");
 		}
-		return toResponse(loan, LocalDate.now(), reservationService.findBookIdsWithActiveReservations());
+		return toResponse(loan, LocalDate.now(),
+				reservationService.findBookIdsWithActiveReservations(List.of(loan.getBookCopy().getBook().getId())));
 	}
 
 	@Transactional
@@ -98,10 +144,12 @@ public class LoanService {
 		LocalDate checkoutDate = LocalDate.now();
 		Loan loan = new Loan(member, copy, checkoutDate, checkoutDate.plusDays(LOAN_PERIOD_DAYS), actor);
 		copy.updateStatus(BookCopy.Status.ON_LOAN);
+		Loan savedLoan = loanRepository.save(loan);
+		activityService.recordLoanEvent(ActivityEventType.LOAN_CHECKED_OUT, savedLoan, actor.getUsername());
 		return toResponse(
-				loanRepository.save(loan),
+				savedLoan,
 				checkoutDate,
-				reservationService.findBookIdsWithActiveReservations()
+				reservationService.findBookIdsWithActiveReservations(List.of(copy.getBook().getId()))
 		);
 	}
 
@@ -125,11 +173,13 @@ public class LoanService {
 				patron
 		);
 		copy.updateStatus(BookCopy.Status.ON_LOAN);
-		reservationService.markFulfilled(reservation);
+		reservationService.markFulfilled(reservation, username);
+		Loan savedLoan = loanRepository.save(loan);
+		activityService.recordLoanEvent(ActivityEventType.LOAN_CHECKED_OUT, savedLoan, username);
 		return toResponse(
-				loanRepository.save(loan),
+				savedLoan,
 				checkoutDate,
-				reservationService.findBookIdsWithActiveReservations()
+				reservationService.findBookIdsWithActiveReservations(List.of(copy.getBook().getId()))
 		);
 	}
 
@@ -155,11 +205,13 @@ public class LoanService {
 		StaffAccount staff = getStaff(staffUsername);
 		LocalDate returnDate = LocalDate.now();
 		loan.returnOn(returnDate, staff);
-		reservationService.holdNext(initialCopy.getBook().getId(), copy);
+		Loan savedLoan = loanRepository.save(loan);
+		activityService.recordLoanEvent(ActivityEventType.LOAN_RETURNED, savedLoan, staff.getUsername());
+		reservationService.holdNext(initialCopy.getBook().getId(), copy, staff.getUsername());
 		return toResponse(
-				loanRepository.save(loan),
+				savedLoan,
 				returnDate,
-				reservationService.findBookIdsWithActiveReservations()
+				reservationService.findBookIdsWithActiveReservations(List.of(initialCopy.getBook().getId()))
 		);
 	}
 
@@ -193,10 +245,12 @@ public class LoanService {
 		}
 
 		loan.renewUntil(loan.getDueDate().plusDays(LOAN_PERIOD_DAYS), actor);
+		Loan savedLoan = loanRepository.save(loan);
+		activityService.recordLoanEvent(ActivityEventType.LOAN_RENEWED, savedLoan, actor.getUsername());
 		return toResponse(
-				loanRepository.save(loan),
+				savedLoan,
 				today,
-				reservationService.findBookIdsWithActiveReservations()
+				reservationService.findBookIdsWithActiveReservations(List.of(bookId))
 		);
 	}
 

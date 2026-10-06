@@ -11,8 +11,29 @@ export function initializeLoans(showToast, onInventoryChanged) {
 	const checkoutMember = document.querySelector("#checkout-member");
 	const checkoutCopy = document.querySelector("#checkout-copy");
 	const checkoutFormError = document.querySelector("#checkout-form-error");
+	const loansSearchForm = document.querySelector("#loans-search-form");
+	const loansQuery = document.querySelector("#loans-query");
+	const loansState = document.querySelector("#loans-state");
+	const loansSort = document.querySelector("#loans-sort");
+	const loansDirection = document.querySelector("#loans-direction");
+	const loansPagination = document.querySelector("#loans-pagination");
+	const loansPageStatus = document.querySelector("#loans-page-status");
+	const activityList = document.querySelector("#activity-list");
+	const activityLoading = document.querySelector("#activity-loading");
+	const activityEmpty = document.querySelector("#activity-empty");
+	const activityFeedback = document.querySelector("#activity-feedback");
+	const activitySearchForm = document.querySelector("#activity-search-form");
+	const activityQuery = document.querySelector("#activity-query");
+	const activityType = document.querySelector("#activity-type");
+	const activityPagination = document.querySelector("#activity-pagination");
+	const activityPageStatus = document.querySelector("#activity-page-status");
 
 	let loans = [];
+	let loanPage = 0;
+	let loanPageResult = null;
+	let activities = [];
+	let activityPage = 0;
+	let activityPageResult = null;
 	let role = "STAFF";
 
 	function setFeedback(message, isError = false) {
@@ -20,6 +41,13 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		loansFeedback.classList.toggle("error", isError);
 		loansFeedback.classList.toggle("success", !isError);
 		loansFeedback.hidden = !message;
+	}
+
+	function setActivityFeedback(message, isError = false) {
+		activityFeedback.textContent = message;
+		activityFeedback.classList.toggle("error", isError);
+		activityFeedback.classList.toggle("success", !isError);
+		activityFeedback.hidden = !message;
 	}
 
 	function formatDate(value) {
@@ -116,6 +144,23 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		loansLoading.hidden = true;
 		loansTable.hidden = loans.length === 0;
 		loansEmpty.hidden = loans.length !== 0;
+		if (loans.length === 0) {
+			const hasFilters = loansQuery.value || loansState.value;
+			document.querySelector("#loans-empty h3").textContent = hasFilters
+				? "Không tìm thấy lượt mượn phù hợp"
+				: "Chưa có lượt mượn";
+			document.querySelector("#loans-empty p").textContent = hasFilters
+				? "Thử thay đổi từ khóa hoặc bộ lọc."
+				: role === "PATRON"
+					? "Các lượt mượn và hạn trả của bạn sẽ xuất hiện tại đây."
+					: "Tạo thành viên, đầu sách và bản sách sẵn sàng, rồi bắt đầu cho mượn.";
+		}
+		loansPagination.hidden = !loanPageResult || loanPageResult.totalPages <= 1;
+		if (loanPageResult) {
+			loansPageStatus.textContent = `Trang ${loanPageResult.page + 1} / ${Math.max(loanPageResult.totalPages, 1)} · ${loanPageResult.totalElements} lượt mượn`;
+			document.querySelector("#loans-previous").disabled = loanPageResult.first;
+			document.querySelector("#loans-next").disabled = loanPageResult.last;
+		}
 	}
 
 	async function loadLoans() {
@@ -124,13 +169,140 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		loansEmpty.hidden = true;
 		setFeedback("");
 		try {
-			loans = await apiRequest("/api/loans");
+			const params = new URLSearchParams({
+				q: loansQuery.value.trim(),
+				state: loansState.value,
+				page: String(loanPage),
+				size: "20",
+				sort: loansSort.value,
+				direction: loansDirection.value
+			});
+			loanPageResult = await apiRequest(`/api/loans?${params}`);
+			if (loanPageResult.totalPages > 0 && loanPage >= loanPageResult.totalPages) {
+				loanPage = loanPageResult.totalPages - 1;
+				return loadLoans();
+			}
+			loans = loanPageResult.items;
 			renderLoans();
 		} catch (error) {
 			loansLoading.hidden = true;
 			setFeedback(userMessage(error), true);
 		}
 	}
+
+	function activityLabel(type) {
+		return ({
+			LOAN_CHECKED_OUT: "Đã mượn sách",
+			LOAN_RETURNED: "Đã trả sách",
+			LOAN_RENEWED: "Đã gia hạn lượt mượn",
+			RESERVATION_PLACED: "Đã đặt trước",
+			RESERVATION_HELD: "Đã giữ bản sách",
+			RESERVATION_CANCELLED: "Đã hủy đặt trước",
+			RESERVATION_FULFILLED: "Đã nhận sách đặt trước"
+		})[type] || "Hoạt động thư viện";
+	}
+
+	function renderActivity(event) {
+		const item = document.createElement("li");
+		const heading = document.createElement("strong");
+		heading.textContent = activityLabel(event.type);
+		const details = document.createElement("p");
+		const parts = [];
+		if (event.bookTitle) {
+			parts.push(event.bookTitle);
+		}
+		if (event.memberName) {
+			parts.push(event.memberName);
+		}
+		if (event.copyId) {
+			parts.push(`Bản sách #${event.copyId}`);
+		}
+		const description = document.createElement("span");
+		description.textContent = parts.join(" · ") || "Thao tác thư viện";
+		const actor = document.createElement("span");
+		actor.className = "activity-actor";
+		actor.textContent = ` · Thực hiện bởi ${event.actorUsername}`;
+		const timestamp = document.createElement("time");
+		timestamp.dateTime = event.occurredAt;
+		timestamp.textContent = new Date(event.occurredAt).toLocaleString("vi-VN");
+		details.append(description, actor);
+		item.append(heading, details, timestamp);
+		return item;
+	}
+
+	function renderActivities() {
+		activityList.replaceChildren(...activities.map(renderActivity));
+		activityLoading.hidden = true;
+		activityEmpty.hidden = activities.length !== 0;
+		activityPagination.hidden = !activityPageResult || activityPageResult.totalPages <= 1;
+		if (activityPageResult) {
+			activityPageStatus.textContent = `Trang ${activityPageResult.page + 1} / ${Math.max(activityPageResult.totalPages, 1)} · ${activityPageResult.totalElements} hoạt động`;
+			document.querySelector("#activity-previous").disabled = activityPageResult.first;
+			document.querySelector("#activity-next").disabled = activityPageResult.last;
+		}
+	}
+
+	async function loadActivity() {
+		activityLoading.hidden = false;
+		activityEmpty.hidden = true;
+		activityList.replaceChildren();
+		setActivityFeedback("");
+		try {
+			const params = new URLSearchParams({
+				q: activityQuery.value.trim(),
+				type: activityType.value,
+				page: String(activityPage),
+				size: "20"
+			});
+			activityPageResult = await apiRequest(`/api/activity?${params}`);
+			if (activityPageResult.totalPages > 0 && activityPage >= activityPageResult.totalPages) {
+				activityPage = activityPageResult.totalPages - 1;
+				return loadActivity();
+			}
+			activities = activityPageResult.items;
+			renderActivities();
+		} catch (error) {
+			activityLoading.hidden = true;
+			setActivityFeedback(userMessage(error), true);
+		}
+	}
+
+	loansSearchForm.addEventListener("submit", event => {
+		event.preventDefault();
+		loanPage = 0;
+		loadLoans();
+	});
+	document.querySelector("#loans-reset").addEventListener("click", () => {
+		loansSearchForm.reset();
+		loanPage = 0;
+		loadLoans();
+	});
+	document.querySelector("#loans-previous").addEventListener("click", () => {
+		loanPage = Math.max(0, loanPage - 1);
+		loadLoans();
+	});
+	document.querySelector("#loans-next").addEventListener("click", () => {
+		loanPage += 1;
+		loadLoans();
+	});
+	activitySearchForm.addEventListener("submit", event => {
+		event.preventDefault();
+		activityPage = 0;
+		loadActivity();
+	});
+	document.querySelector("#activity-reset").addEventListener("click", () => {
+		activitySearchForm.reset();
+		activityPage = 0;
+		loadActivity();
+	});
+	document.querySelector("#activity-previous").addEventListener("click", () => {
+		activityPage = Math.max(0, activityPage - 1);
+		loadActivity();
+	});
+	document.querySelector("#activity-next").addEventListener("click", () => {
+		activityPage += 1;
+		loadActivity();
+	});
 
 	function appendPlaceholder(select, text) {
 		const option = document.createElement("option");
@@ -156,7 +328,7 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		try {
 			const [members, books] = await Promise.all([
 				apiRequest("/api/members"),
-				apiRequest("/api/books")
+				apiRequest("/api/books/options")
 			]);
 			const copiesByBook = await Promise.all(books.map(async book => ({
 				book,
@@ -212,7 +384,7 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		button.disabled = true;
 		try {
 			await apiRequest(`/api/loans/${loan.id}/return`, { method: "POST" });
-			await Promise.all([loadLoans(), onInventoryChanged()]);
+			await Promise.all([loadLoans(), loadActivity(), onInventoryChanged()]);
 			showToast("Đã ghi nhận trả sách.");
 		} catch (error) {
 			showToast(userMessage(error), true);
@@ -229,11 +401,11 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		button.disabled = true;
 		try {
 			const renewedLoan = await apiRequest(`/api/loans/${loan.id}/renew`, { method: "POST" });
-			await loadLoans();
+			await Promise.all([loadLoans(), loadActivity()]);
 			showToast(`Đã gia hạn. Hạn trả mới: ${formatDate(renewedLoan.dueDate)}.`);
 		} catch (error) {
 			showToast(userMessage(error), true);
-			await loadLoans();
+			await Promise.all([loadLoans(), loadActivity()]);
 		} finally {
 			button.disabled = false;
 		}
@@ -263,7 +435,7 @@ export function initializeLoans(showToast, onInventoryChanged) {
 				})
 			});
 			checkoutDialog.close();
-			await Promise.all([loadLoans(), onInventoryChanged()]);
+			await Promise.all([loadLoans(), loadActivity(), onInventoryChanged()]);
 			showToast("Đã lập phiếu mượn. Hạn trả sau 14 ngày.");
 		} catch (error) {
 			checkoutFormError.textContent = userMessage(error);
@@ -278,10 +450,7 @@ export function initializeLoans(showToast, onInventoryChanged) {
 		const canManage = role === "STAFF" || role === "ADMIN";
 		document.querySelector("#checkout-button").hidden = !canManage;
 		document.querySelector('[data-action="checkout"]').hidden = !canManage;
-		document.querySelector("#loans-empty p").textContent = role === "PATRON"
-			? "Các lượt mượn và hạn trả của bạn sẽ xuất hiện tại đây."
-			: "Tạo thành viên, đầu sách và bản sách sẵn sàng, rồi bắt đầu cho mượn.";
 	}
 
-	return { loadLoans, setRole };
+	return { loadLoans, loadActivity, setRole };
 }

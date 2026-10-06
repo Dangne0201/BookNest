@@ -38,7 +38,7 @@ public class BookCopyService {
 	}
 
 	@Transactional
-	public BookCopyResponse create(long bookId, BookCopyRequest request) {
+	public BookCopyResponse create(long bookId, BookCopyRequest request, String actorUsername) {
 		Book book = bookRepository.findByIdForUpdate(bookId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "book_not_found"));
 		if (request.status() == BookCopy.Status.ON_LOAN || request.status() == BookCopy.Status.ON_HOLD) {
@@ -46,13 +46,13 @@ public class BookCopyService {
 		}
 		BookCopy copy = bookCopyRepository.save(new BookCopy(book, request.status()));
 		if (copy.getStatus() == BookCopy.Status.AVAILABLE) {
-			reservationService.holdNext(bookId, copy);
+			reservationService.holdNext(bookId, copy, actorUsername);
 		}
 		return toResponse(copy);
 	}
 
 	@Transactional
-	public BookCopyResponse update(long bookId, long copyId, BookCopyRequest request) {
+	public BookCopyResponse update(long bookId, long copyId, BookCopyRequest request, String actorUsername) {
 		bookRepository.findByIdForUpdate(bookId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "book_not_found"));
 		BookCopy copy = getCopyForUpdate(bookId, copyId);
@@ -67,7 +67,7 @@ public class BookCopyService {
 		}
 		copy.updateStatus(request.status());
 		if (copy.getStatus() == BookCopy.Status.AVAILABLE) {
-			reservationService.holdNext(bookId, copy);
+			reservationService.holdNext(bookId, copy, actorUsername);
 		}
 		return toResponse(bookCopyRepository.save(copy));
 	}

@@ -86,7 +86,8 @@ class ReservationControllerTests {
 
 		mockMvc.perform(get("/api/loans").with(user("reader-b").roles("PATRON")))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$").isEmpty());
+				.andExpect(jsonPath("$.items").isEmpty())
+				.andExpect(jsonPath("$.totalElements").value(0));
 		mockMvc.perform(post("/api/loans/{loanId}/return", loanRepository.findAll().get(0).getId())
 						.with(user("reader-a").roles("PATRON"))
 						.with(csrf()))

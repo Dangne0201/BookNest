@@ -534,6 +534,92 @@ textarea:focus {
 	letter-spacing: -.025em;
 }
 
+.list-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+	gap: 12px;
+	margin: 0 0 18px;
+	padding: 15px;
+	border: 1px solid var(--line);
+	border-radius: 13px;
+	background: rgb(255 255 255 / 78%);
+}
+
+.list-controls label {
+	display: grid;
+	gap: 6px;
+	color: var(--muted);
+	font-size: .78rem;
+	font-weight: 650;
+}
+
+.list-controls input,
+.list-controls select {
+	min-height: 40px;
+	padding: 8px 10px;
+	background: white;
+	font-size: .88rem;
+}
+
+.list-control-actions {
+	display: flex;
+	align-items: end;
+	gap: 8px;
+}
+
+.list-control-actions .button {
+	min-height: 40px;
+}
+
+.pagination-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 14px 0 28px;
+	color: var(--muted);
+	font-size: .85rem;
+}
+
+.activity-section {
+	margin-top: 38px;
+}
+
+.activity-list {
+	display: grid;
+	gap: 9px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.activity-list li {
+	display: grid;
+	grid-template-columns: minmax(120px, .55fr) 1fr auto;
+	align-items: center;
+	gap: 12px;
+	padding: 13px 15px;
+	border: 1px solid var(--line);
+	border-radius: 11px;
+	background: white;
+	font-size: .86rem;
+}
+
+.activity-list p {
+	margin: 0;
+	color: var(--muted);
+}
+
+.activity-list time {
+	color: var(--muted);
+	font-size: .78rem;
+	white-space: nowrap;
+}
+
+.activity-actor {
+	color: var(--muted);
+}
+
 .table-wrap {
 	overflow: hidden;
 	border: 1px solid var(--line);
@@ -1107,6 +1193,15 @@ tbody tr:hover {
 
 	.add-copy-form .button {
 		width: 100%;
+	}
+
+	.activity-list li {
+		grid-template-columns: 1fr;
+		gap: 5px;
+	}
+
+	.pagination-controls {
+		flex-wrap: wrap;
 	}
 }
 

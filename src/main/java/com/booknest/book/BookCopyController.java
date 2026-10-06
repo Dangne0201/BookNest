@@ -1,6 +1,7 @@
 package com.booknest.book;
 
 import java.util.List;
+import java.security.Principal;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -33,18 +34,20 @@ public class BookCopyController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public BookCopyResponse create(
 			@PathVariable long bookId,
-			@Valid @RequestBody BookCopyRequest request
+			@Valid @RequestBody BookCopyRequest request,
+			Principal principal
 	) {
-		return bookCopyService.create(bookId, request);
+		return bookCopyService.create(bookId, request, principal.getName());
 	}
 
 	@PutMapping("/{copyId}")
 	public BookCopyResponse update(
 			@PathVariable long bookId,
 			@PathVariable long copyId,
-			@Valid @RequestBody BookCopyRequest request
+			@Valid @RequestBody BookCopyRequest request,
+			Principal principal
 	) {
-		return bookCopyService.update(bookId, copyId, request);
+		return bookCopyService.update(bookId, copyId, request, principal.getName());
 	}
 
 	@DeleteMapping("/{copyId}")

@@ -1,3 +1,4 @@
+DELETE FROM activity_events;
 DELETE FROM password_reset_events;
 DELETE FROM system_admin_identity;
 DELETE FROM reservations;

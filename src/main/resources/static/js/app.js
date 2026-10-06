@@ -24,17 +24,22 @@ function showToast(message, isError = false) {
 let loans;
 let reservations;
 const books = initializeBooks(showToast, async () => {
-	await Promise.all([loans.loadLoans(), reservations.loadReservations()]);
+	await Promise.all([loans.loadLoans(), reservations.loadReservations(), loans.loadActivity()]);
 });
 const members = initializeMembers(showToast);
 loans = initializeLoans(showToast, () => books.loadBooks());
-reservations = initializeReservations(showToast, () => books.loadBooks(), () => loans.loadLoans());
+reservations = initializeReservations(
+	showToast,
+	() => books.loadBooks(),
+	() => loans.loadLoans(),
+	() => loans.loadActivity()
+);
 const admin = initializeAdmin(showToast);
 const profile = initializeProfile(showToast);
 const auth = initializeAuth({
 	onAuthenticated: async account => {
 		applyRole(account.role);
-		const jobs = [books.loadBooks(), loans.loadLoans()];
+		const jobs = [books.loadBooks(), loans.loadLoans(), loans.loadActivity()];
 		if (account.role === "PATRON") {
 			jobs.push(reservations.loadReservations());
 		} else {
@@ -99,6 +104,7 @@ function selectWorkspaceTab(activeTab) {
 		members.loadMembers();
 	} else if (loansActive) {
 		loans.loadLoans();
+		loans.loadActivity();
 		reservations.loadReservations();
 	} else if (adminActive) {
 		admin.loadAccounts();

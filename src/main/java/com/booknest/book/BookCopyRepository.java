@@ -41,6 +41,19 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
 			""")
 	List<InventoryCount> findInventoryCounts(@Param("availableStatus") BookCopy.Status availableStatus);
 
+	@Query("""
+			select copy.book.id as bookId,
+			       count(copy.id) as totalCopies,
+			       sum(case when copy.status = :availableStatus then 1 else 0 end) as availableCopies
+			from BookCopy copy
+			where copy.book.id in :bookIds
+			group by copy.book.id
+			""")
+	List<InventoryCount> findInventoryCountsByBookIdIn(
+			@Param("bookIds") java.util.Collection<Long> bookIds,
+			@Param("availableStatus") BookCopy.Status availableStatus
+	);
+
 	interface InventoryCount {
 		Long getBookId();
 

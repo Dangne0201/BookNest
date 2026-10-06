@@ -2,6 +2,7 @@ package com.booknest.book;
 
 import java.util.List;
 
+import com.booknest.common.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,8 +27,21 @@ public class BookController {
 	}
 
 	@GetMapping
-	public List<BookResponse> findAll() {
-		return bookService.findAll();
+	public PageResponse<BookResponse> findAll(
+			@RequestParam(defaultValue = "") String q,
+			@RequestParam(defaultValue = "") String genre,
+			@RequestParam(defaultValue = "") String availability,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size,
+			@RequestParam(defaultValue = "title") String sort,
+			@RequestParam(defaultValue = "asc") String direction
+	) {
+		return bookService.findAll(q, genre, availability, page, size, sort, direction);
+	}
+
+	@GetMapping("/options")
+	public List<BookResponse> findOptions() {
+		return bookService.findOptions();
 	}
 
 	@PostMapping

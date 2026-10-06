@@ -21,6 +21,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 	@Query("select distinct reservation.book.id from Reservation reservation where reservation.status in :statuses")
 	Set<Long> findDistinctBookIdsByStatusIn(@Param("statuses") Collection<Reservation.Status> statuses);
 
+	@Query("""
+			select distinct reservation.book.id from Reservation reservation
+			where reservation.book.id in :bookIds and reservation.status in :statuses
+			""")
+	Set<Long> findDistinctBookIdsByBookIdInAndStatusIn(
+			@Param("bookIds") Collection<Long> bookIds,
+			@Param("statuses") Collection<Reservation.Status> statuses
+	);
+
 	long countByBookIdAndStatusAndIdLessThan(Long bookId, Reservation.Status status, Long id);
 
 	@EntityGraph(attributePaths = {"member", "member.account", "book", "copy"})

@@ -7,6 +7,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.booknest.common.PageRequestFactory;
+import com.booknest.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +30,58 @@ public class BookService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<BookResponse> findAll() {
+	public PageResponse<BookResponse> findAll(
+			String query,
+			String genre,
+			String availability,
+			int page,
+			int size,
+			String sort,
+			String direction
+	) {
+		String normalizedAvailability = trimToNull(availability);
+		if (normalizedAvailability != null) {
+			normalizedAvailability = normalizedAvailability.toUpperCase(Locale.ROOT);
+			if (!normalizedAvailability.equals("AVAILABLE") && !normalizedAvailability.equals("UNAVAILABLE")) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_availability_filter");
+			}
+		}
+		PageRequest pageable = PageRequestFactory.create(
+				page,
+				size,
+				sort,
+				direction,
+				Map.of(
+						"title", "title",
+						"author", "author",
+						"genre", "genre",
+						"publicationYear", "publicationYear",
+						"id", "id"
+				),
+				"title",
+				"asc"
+		);
+		Page<Book> bookPage = bookRepository.search(
+				query == null ? "" : query.trim(),
+				genre == null ? "" : genre.trim(),
+				normalizedAvailability == null ? "" : normalizedAvailability,
+				pageable
+		);
+		List<Long> bookIds = bookPage.getContent().stream().map(Book::getId).toList();
+		Map<Long, BookCopyRepository.InventoryCount> counts = new HashMap<>();
+		if (!bookIds.isEmpty()) {
+			bookCopyRepository.findInventoryCountsByBookIdIn(bookIds, BookCopy.Status.AVAILABLE)
+					.forEach(count -> counts.put(count.getBookId(), count));
+		}
+
+		return PageResponse.from(bookPage.map(book -> toResponse(book, counts.get(book.getId()))));
+	}
+
+	@Transactional(readOnly = true)
+	public List<BookResponse> findOptions() {
 		Map<Long, BookCopyRepository.InventoryCount> counts = new HashMap<>();
 		bookCopyRepository.findInventoryCounts(BookCopy.Status.AVAILABLE)
 				.forEach(count -> counts.put(count.getBookId(), count));
-
 		return bookRepository.findAllByOrderByTitleAscIdAsc().stream()
 				.map(book -> toResponse(book, counts.get(book.getId())))
 				.toList();

@@ -525,4 +525,48 @@ The user selected the existing 14-calendar-day loan period with the current due 
 
 **Verification:** `.\mvnw.cmd --no-transfer-progress clean verify` passed 51 tests with 0 failures/errors/skips. JavaScript syntax checks, `git diff --check`, and `docker compose config --quiet` passed. `docker compose up -d --build` rebuilt and started the app against the existing PostgreSQL volume; Flyway V8 succeeded and readiness returned HTTP 200 with app/DB UP. Database inspection found 6 accounts, 4 books, 9 copies, 4 members, 5 loans, 6 reservations, and exactly 1 renewed loan. The renewed demo-patron loan now has a due date of 2026-10-31 and records `demo-patron` as its actor. Browser test confirmed the confirmation prompt, extension from 2026-10-17 to 2026-10-31, persisted actor/status after app restart and sign-in, and no renewal action after use. The full signed-in page has the noted pre-existing 360px account-bar overflow; the loan table remains horizontally scrollable within its wrapper.
 
-**State:** Implementation and functional verification are complete; the increment is awaiting user acceptance. Do not commit or push until accepted.
+**State:** Accepted by the user on 2026-10-06. The separate pre-existing signed-in account-bar overflow at 360px remains documented and outside this increment.
+
+### Phase 6 — Activity history and searchable, paginated lists
+
+This phase adds an append-only activity timeline and database-backed discovery for the public/shared book catalog and loans. Keep authorization in the backend: staff/admin can browse shared loan/history records; patrons remain limited to their own loans and activity.
+
+#### Approved implementation scope
+
+- Add a paged response contract with zero-based pages, default size 20, maximum size 100, and stable page metadata. Reject negative pages, sizes outside 1–100, unknown sort fields, and invalid sort directions with a safe 400 response.
+- Books: case-insensitive free-text search over title, author, and ISBN; optional exact genre and availability filters; allowlisted sorting by title, author, genre, publication year, or ID. Keep filtering/sorting/paging in PostgreSQL, not in-memory.
+- Loans: case-insensitive search over book title and member name; optional `ACTIVE`, `OVERDUE`, or `RETURNED` filter; allowlisted sorting by checkout date, due date, return date, book title, or member name. Derive overdue using the current date. Preserve patron ownership scope in every query.
+- Record timestamped checkout, return, renewal, reservation placement/hold/cancellation/fulfillment events with acting username and safe entity snapshots. Store no passwords, credentials, session/CSRF data, or unnecessary patron contact details. Do not let history rows prevent ordinary book/member/account deletion; preserve snapshots without cascading or inventing foreign-key ownership.
+- The new activity timeline begins with actions performed after migration V9. Do not fabricate historical reservation actors or transition times; older loan history remains available from existing loan records and their stored actors/dates.
+- Provide an authenticated, newest-first, paginated activity endpoint. Staff/admin see shared-library events; patrons see only events associated with their own linked account/member, enforced in the query.
+- Add usable search/filter/sort/page controls to the existing Books and Loans views and a paginated activity section. Keep inputs encoded, results rendered with safe DOM APIs, query state reset to page zero when filters change, and loading/empty/error states accessible.
+- Preserve existing response/behavior needed by details, checkout, reservation, and role-specific views; update all list consumers when introducing the paged response shape. Do not add dashboard, member pagination, export, or unbounded audit payloads.
+
+#### Acceptance checks
+
+- [x] Book search/genre/availability filters, allowlisted sort and database paging produce correct results/counts; sorting is stable for ties.
+- [x] Loan search/status filtering, allowlisted sort and database paging work for staff/admin and are strictly scoped for patrons. Overdue is date-derived.
+- [x] Negative page, size 0 or above 100, unknown sort, invalid direction, and invalid status/type inputs are rejected safely; clients cannot inject arbitrary SQL/property names.
+- [x] Checkout, return, renewal, and reservation placement/hold/cancel/fulfill each create accurate immutable history rows in the same transaction as their business change, with the authenticated actor and correct safe snapshots.
+- [x] Staff/admin can view shared activity; patrons cannot see another patron's events or personal details; anonymous access is rejected.
+- [x] Migration V9 preserves existing data and old loan history; deleting otherwise deletable catalog/member/account records is not blocked by activity snapshots.
+- [x] Search/filter UI flows were exercised against PostgreSQL for staff and patron views, and results use safe DOM rendering. A previously tracked, app-wide 360px horizontal overflow remains due to the signed-in account bar; this change does not alter that header.
+- [x] Focused tests cover query correctness, page metadata/counts, stable allowlisted sort, invalid inputs, privacy/authorization, all event types, transactional rollback, and migration compatibility. Full verification, Compose validation/build, V9 migration/readiness, and browser checks passed as recorded in `AGENTS.md`.
+- [x] README, AGENTS.md, and both bilingual checklists reflect implemented API contracts, history scope, and actual test outcomes.
+
+#### Anticipated file ledger
+
+- [x] `src/main/java/com/booknest/common/PageResponse.java` and `PageRequestFactory.java` — bounded, consistent page metadata and input validation.
+- [x] `src/main/java/com/booknest/activity/ActivityEvent.java`, `ActivityEventType.java`, `ActivityEventRepository.java`, `ActivityService.java`, `ActivityController.java`, and `ActivityResponse.java` — immutable snapshots, role-scoped history and endpoint.
+- [x] `src/main/resources/db/migration/V9__create_activity_events.sql` — additive activity storage/index migration that leaves existing rows intact.
+- [x] `src/main/java/com/booknest/book/BookRepository.java`, `BookCopyRepository.java`, `BookService.java`, `BookController.java`, `BookCopyService.java`, and `BookCopyController.java` — database-backed book filters/sort/page, reservation-hold actor propagation, and safe lookup behavior for existing list consumers.
+- [x] `LoanRepository.java`, `LoanService.java`, and `LoanController.java` — database-backed loan filters/sort/page while preserving ownership and renewal eligibility.
+- [x] `src/main/java/com/booknest/reservation/ReservationRepository.java`, `ReservationService.java`, and `loan/LoanService.java` — record transactional lifecycle activity using server-derived actors.
+- [x] `src/main/java/com/booknest/book/BookCopyService.java` and `BookCopyController.java` — preserve authenticated actor attribution when manually making a copy available causes a queued hold.
+- [x] `src/main/java/com/booknest/security/SecurityConfig.java`, `web/ApiExceptionHandler.java`, and `static/js/api.js` — protect history and safely reject/localize invalid query parameters.
+- [x] `src/main/resources/static/index.html`, `css/styles.css`, `js/books.js`, `js/loans.js`, `js/reservations.js`, and `js/app.js` — accessible discovery controls and activity timeline; keep safe DOM rendering.
+- [x] `src/test/java/com/booknest/book/BookControllerTests.java`, `loan/LoanControllerTests.java`, `reservation/ReservationControllerTests.java`, and new `activity/ActivityControllerTests.java` — search/pagination/sort, lifecycle, permissions, privacy, and rollback coverage.
+- [x] `src/test/resources/cleanup.sql` — isolate appended activity rows between tests.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — document API/UI behavior and verified outcomes.
+
+**State:** Implementation and verification are complete; Phase 6 is awaiting user acceptance. `.\mvnw.cmd --no-transfer-progress clean verify` passed 59 tests with 0 failures/errors/skips. JavaScript syntax, `git diff --check`, `docker compose config --quiet`, Compose rebuild, V9 migration, HTTP 200 app/database readiness, PostgreSQL catalog/search/loan/activity queries, and staff/patron browser flows passed. Existing PostgreSQL rows were preserved. The previously tracked signed-in account-bar overflow at a 360px viewport remains outside this phase.

@@ -91,16 +91,23 @@ All write requests require a CSRF token. `GET /api/auth/csrf` starts/continues a
 | `GET /api/auth/me` | Authenticated | Read the current account and role |
 | `POST /api/auth/password` | Authenticated, CSRF | Change password; current session ends |
 | `POST /api/auth/logout` | Authenticated, CSRF | End the current session |
-| `GET /api/books/**` | Public | Browse catalog and available-copy counts |
+| `GET /api/books` | Public | Search/filter/page the catalog and available-copy counts |
+| `GET /api/books/options` | Public | Compact title list for existing checkout/reservation selectors |
 | `/api/books/**` writes | Staff/admin, CSRF | Manage titles and physical copies |
 | `/api/members/me` | Patron, CSRF for update | Read/update only the current patron's profile |
 | `/api/members/**` | Staff/admin, CSRF for writes | Manage unlinked member records |
+| `GET /api/loans` | Patron/staff/admin | Search/filter/page loans; patrons see only their own |
 | `/api/loans/**` | Patron/staff/admin; CSRF for writes | Patrons access own loans; staff/admin manage returns |
 | `POST /api/loans/{loanId}/renew` | Patron (own loan), staff/admin; CSRF | Renew an eligible loan once; add 14 days to its current due date |
 | `/api/reservations/**` | Patron/staff/admin; CSRF for writes | Join, view, cancel, and fulfill reservation queues |
+| `GET /api/activity` | Authenticated | Search/page recent lifecycle events; patrons see only their own |
 | `/api/admin/accounts/**` | Admin, CSRF for writes | List accounts, provision staff, and reset patron/staff passwords |
 
 Admin self-recovery is intentionally not exposed as a web endpoint; it is the local Docker Compose command above.
+
+Paged list responses contain `items`, zero-based `page`, `size`, `totalElements`, `totalPages`, `first`, and `last`. The default page size is 20 and the maximum is 100. Book filters accept `q`, `genre`, and `availability` (`AVAILABLE` or `UNAVAILABLE`); book sort fields are `title`, `author`, `genre`, `publicationYear`, and `id`. Loan filters accept `q` and `state` (`ACTIVE`, `OVERDUE`, or `RETURNED`); loan sort fields are `checkoutDate`, `dueDate`, `returnDate`, `bookTitle`, and `memberName`. Both accept `page`, `size`, `sort`, and `direction` (`asc` or `desc`). Activity accepts `q`, `type`, `page`, and `size`; it is ordered newest first.
+
+The activity timeline records checkout, return, renewal, and reservation placement/hold/cancellation/fulfillment from migration V9 onward. It keeps safe snapshots of the acting username and relevant book/member details without creating foreign-key dependencies. Earlier loan details remain available from loan records; historical reservation transitions are not backfilled.
 
 ## Tests
 
@@ -122,6 +129,6 @@ Automated tests cover registration, roles and authorization, profile ownership, 
 
 ## Current scope
 
-The responsive interface uses same-origin HTML/CSS/JavaScript and does not store passwords or patron data in browser storage. Search/filter/backend pagination and a dashboard are not implemented yet; there is no frontend framework, cloud deployment, email service, OAuth, JWT, or microservice architecture.
+The responsive interface uses same-origin HTML/CSS/JavaScript and does not store passwords or patron data in browser storage. Book and loan search/filter/sort use database-backed pagination; the activity timeline is paginated. A dashboard is not implemented yet. There is no frontend framework, cloud deployment, email service, OAuth, JWT, or microservice architecture.
 
 See [PHASE_CHECKLIST.md](PHASE_CHECKLIST.md) and [PHASE_CHECKLIST.vi.md](PHASE_CHECKLIST.vi.md) for acceptance and verification status. Project/agent context is in [AGENTS.md](AGENTS.md).

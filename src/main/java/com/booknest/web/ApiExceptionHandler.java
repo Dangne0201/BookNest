@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,12 +43,29 @@ public class ApiExceptionHandler {
 				.body(Map.of("error", "invalid_request", "message", "Request body is invalid."));
 	}
 
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<Map<String, String>> handleInvalidQueryParameter(
+			MethodArgumentTypeMismatchException exception
+	) {
+		return ResponseEntity.badRequest()
+				.body(Map.of("error", "invalid_query_parameter", "message", "A query parameter is invalid."));
+	}
+
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<Map<String, String>> handleRequestFailure(ResponseStatusException exception) {
 		HttpStatusCode status = exception.getStatusCode();
 		String error = exception.getReason() == null ? "request_failed" : exception.getReason();
 		String message = switch (status.value()) {
-			case 400 -> "Request validation failed.";
+			case 400 -> switch (error) {
+				case "invalid_page" -> "The page index cannot be negative.";
+				case "invalid_page_size" -> "Page size must be between 1 and 100.";
+				case "invalid_sort_field" -> "The requested sort field is not supported.";
+				case "invalid_sort_direction" -> "Sort direction must be asc or desc.";
+				case "invalid_availability_filter" -> "The availability filter is invalid.";
+				case "invalid_loan_state" -> "The loan state filter is invalid.";
+				case "invalid_activity_type" -> "The activity type filter is invalid.";
+				default -> "Request validation failed.";
+			};
 			case 404 -> "The requested resource was not found.";
 			case 409 -> switch (error) {
 				case "member_has_loan_history" -> "The member cannot be deleted because loan history exists.";

@@ -3,6 +3,8 @@ package com.booknest.reservation;
 import java.util.List;
 import java.util.Set;
 
+import com.booknest.activity.ActivityEventType;
+import com.booknest.activity.ActivityService;
 import com.booknest.account.StaffAccount;
 import com.booknest.account.StaffAccountRepository;
 import com.booknest.book.Book;
@@ -24,19 +26,22 @@ public class ReservationService {
 	private final MemberRepository memberRepository;
 	private final BookRepository bookRepository;
 	private final BookCopyRepository bookCopyRepository;
+	private final ActivityService activityService;
 
 	public ReservationService(
 			ReservationRepository reservationRepository,
 			StaffAccountRepository staffAccountRepository,
 			MemberRepository memberRepository,
 			BookRepository bookRepository,
-			BookCopyRepository bookCopyRepository
+			BookCopyRepository bookCopyRepository,
+			ActivityService activityService
 	) {
 		this.reservationRepository = reservationRepository;
 		this.staffAccountRepository = staffAccountRepository;
 		this.memberRepository = memberRepository;
 		this.bookRepository = bookRepository;
 		this.bookCopyRepository = bookCopyRepository;
+		this.activityService = activityService;
 	}
 
 	@Transactional(readOnly = true)
@@ -74,6 +79,7 @@ public class ReservationService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "reservation_already_active");
 		}
 		Reservation reservation = reservationRepository.save(new Reservation(member, book));
+		activityService.recordReservationEvent(ActivityEventType.RESERVATION_PLACED, reservation, username);
 		return toResponse(reservation);
 	}
 
@@ -97,12 +103,13 @@ public class ReservationService {
 		}
 
 		BookCopy heldCopy = reservation.getCopy();
+		activityService.recordReservationEvent(ActivityEventType.RESERVATION_CANCELLED, reservation, username);
 		reservation.cancel();
 		if (heldCopy != null) {
 			BookCopy copy = bookCopyRepository.findByIdForUpdate(heldCopy.getId())
 					.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "reservation_copy_missing"));
 			copy.updateStatus(BookCopy.Status.AVAILABLE);
-			holdNext(reservation.getBook().getId(), copy);
+			holdNext(reservation.getBook().getId(), copy, username);
 		}
 	}
 
@@ -125,7 +132,7 @@ public class ReservationService {
 	}
 
 	@Transactional
-	public boolean holdNext(long bookId, BookCopy copy) {
+	public boolean holdNext(long bookId, BookCopy copy, String actorUsername) {
 		List<Reservation> waiting = reservationRepository.findWaitingByBookForUpdate(
 				bookId,
 				Reservation.Status.WAITING
@@ -134,8 +141,14 @@ public class ReservationService {
 			copy.updateStatus(BookCopy.Status.AVAILABLE);
 			return false;
 		}
-		waiting.get(0).hold(copy);
+		Reservation heldReservation = waiting.get(0);
+		heldReservation.hold(copy);
 		copy.updateStatus(BookCopy.Status.ON_HOLD);
+		activityService.recordReservationEvent(
+				ActivityEventType.RESERVATION_HELD,
+				heldReservation,
+				actorUsername
+		);
 		return true;
 	}
 
@@ -149,12 +162,25 @@ public class ReservationService {
 		return reservationRepository.findDistinctBookIdsByStatusIn(activeStatuses());
 	}
 
+	@Transactional(readOnly = true)
+	public Set<Long> findBookIdsWithActiveReservations(List<Long> bookIds) {
+		if (bookIds.isEmpty()) {
+			return Set.of();
+		}
+		return reservationRepository.findDistinctBookIdsByBookIdInAndStatusIn(bookIds, activeStatuses());
+	}
+
 	private static List<Reservation.Status> activeStatuses() {
 		return List.of(Reservation.Status.WAITING, Reservation.Status.HELD);
 	}
 
 	@Transactional
-	public void markFulfilled(Reservation reservation) {
+	public void markFulfilled(Reservation reservation, String actorUsername) {
+		activityService.recordReservationEvent(
+				ActivityEventType.RESERVATION_FULFILLED,
+				reservation,
+				actorUsername
+		);
 		reservation.fulfill();
 	}
 

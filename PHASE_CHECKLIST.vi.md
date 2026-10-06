@@ -526,4 +526,48 @@ Người dùng chọn kỳ hạn gia hạn 14 ngày lịch hiện tại, tính t
 
 **Kiểm chứng:** `.\mvnw.cmd --no-transfer-progress clean verify` đạt 51 test, 0 lỗi/thất bại/bỏ qua. Kiểm tra cú pháp JavaScript, `git diff --check` và `docker compose config --quiet` đều đạt. `docker compose up -d --build` build lại app và chạy với volume PostgreSQL hiện có; Flyway V8 áp dụng thành công, readiness HTTP 200 với app/DB UP. Truy vấn DB ghi nhận 6 account, 4 book, 9 copy, 4 member, 5 loan, 6 reservation và đúng 1 loan đã gia hạn. Loan demo-patron có hạn mới 2026-10-31 và actor `demo-patron`. Trình duyệt xác nhận hộp thoại, hạn đổi từ 2026-10-17 sang 2026-10-31, actor/trạng thái vẫn còn sau khi app restart và đăng nhập lại, nút gia hạn không còn hiện. Toàn trang khi đăng nhập còn tràn ngang ở 360px do account bar có từ trước; bảng loan vẫn cuộn ngang bên trong wrapper.
 
-**Trạng thái:** Đã triển khai và kiểm tra chức năng; phần gia hạn đang chờ người dùng nghiệm thu. Không commit/push trước khi được xác nhận.
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06. Lỗi account bar đã có từ trước khiến tràn ngang tại 360px được ghi nhận riêng, không thuộc lát cắt này.
+
+### Phase 6 — Lịch sử hoạt động và danh sách tìm kiếm, phân trang
+
+Phase này bổ sung timeline hoạt động chỉ-ghi-thêm và khả năng tìm kiếm dữ liệu theo trang trong database cho danh mục sách và lượt mượn. Backend phải thực thi quyền: staff/admin xem dữ liệu thư viện chung; patron chỉ xem lượt mượn và hoạt động của chính mình.
+
+#### Phạm vi triển khai đã thống nhất
+
+- Thêm cấu trúc response phân trang dùng chung: trang bắt đầu từ 0, mặc định 20 bản ghi/trang, tối đa 100 và có metadata ổn định. Từ chối page âm, size ngoài 1–100, sort field không cho phép và sort direction không hợp lệ bằng lỗi 400 an toàn.
+- Sách: tìm kiếm không phân biệt hoa thường trên title, author, ISBN; lọc tùy chọn theo genre chính xác và tình trạng còn bản; chỉ cho sort theo title, author, genre, publication year hoặc ID. Search/filter/sort/paging phải chạy tại PostgreSQL, không lấy hết rồi lọc trong bộ nhớ.
+- Lượt mượn: tìm kiếm không phân biệt hoa thường theo tên sách và thành viên; lọc tùy chọn `ACTIVE`, `OVERDUE`, `RETURNED`; sort allowlist theo ngày mượn, hạn trả, ngày trả, tên sách hoặc tên thành viên. Tính quá hạn theo ngày hiện tại. Mọi query phải giữ giới hạn sở hữu dữ liệu của patron.
+- Ghi lại event có timestamp cho mượn, trả, gia hạn, tạo đặt trước/giữ sách/hủy/hoàn tất đặt trước, kèm username người thao tác và snapshot an toàn. Không lưu mật khẩu, credential, session/CSRF hay thông tin liên hệ không cần thiết. Activity snapshot không được cản xóa sách/thành viên/tài khoản vốn hợp lệ; không dùng cascade hoặc giả định quan hệ sở hữu FK.
+- Timeline mới bắt đầu ghi các hành động từ sau migration V9. Không tự dựng actor/thời điểm chuyển trạng thái đặt trước cũ; lịch sử loan cũ vẫn xem được từ bản ghi loan cùng actor/ngày đã lưu.
+- Tạo endpoint activity có xác thực, phân trang mới nhất trước. Staff/admin xem sự kiện thư viện chung; patron chỉ xem sự kiện gắn với account/member của mình, giới hạn ngay trong query backend.
+- Thêm điều khiển tìm kiếm/lọc/sort/trang trên giao diện Books và Loans cùng một khu lịch sử có phân trang. Mã hóa query params, render bằng DOM an toàn, đổi filter thì về trang 0, giữ trạng thái loading/empty/error accessible.
+- Giữ nguyên behavior/response mà màn chi tiết, checkout, đặt trước và role hiện tại phụ thuộc vào; cập nhật mọi nơi tiêu thụ list khi đổi response sang dạng phân trang. Không thêm dashboard, phân trang member, export hay audit payload không giới hạn.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Tìm sách/lọc genre/availability, sort allowlist và phân trang DB trả đúng dữ liệu/tổng; sort ổn định khi trùng giá trị.
+- [x] Tìm/lọc trạng thái loan, sort allowlist và phân trang chạy cho staff/admin, được giới hạn nghiêm ngặt cho patron. Overdue tính từ ngày hiện tại.
+- [x] Page âm, size 0 hoặc trên 100, sort field lạ, direction/status/type sai đều bị từ chối an toàn; client không thể chèn SQL/property tùy ý.
+- [x] Checkout, return, renewal và tạo/giữ/hủy/hoàn tất reservation ghi event chính xác, bất biến trong cùng transaction với nghiệp vụ, dùng actor lấy từ server và snapshot an toàn.
+- [x] Staff/admin xem activity dùng chung; patron không xem được event hoặc dữ liệu riêng của patron khác; anonymous bị từ chối.
+- [x] Migration V9 không mất dữ liệu cũ và giữ nguyên lịch sử loan; xóa catalog/member/account hợp lệ không bị activity snapshot cản trở.
+- [x] Đã chạy UI search/filter với PostgreSQL ở các vai trò staff/patron, kết quả render bằng DOM an toàn. Tình trạng tràn ngang toàn trang ở 360px đã được ghi nhận từ trước do account bar khi đăng nhập; thay đổi lần này không sửa header đó.
+- [x] Test tập trung bao phủ query, metadata/tổng trang, sort allowlist ổn định, input sai, privacy/authorization, tất cả loại event, rollback transaction và tương thích migration. Full verification, Compose, migration/readiness và browser test đều đạt, ghi cụ thể trong `AGENTS.md`.
+- [x] README, AGENTS.md và checklist song ngữ ghi đúng API, history scope và kết quả kiểm chứng thực tế.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/java/com/booknest/common/PageResponse.java` và `PageRequestFactory.java` — metadata phân trang nhất quán, giới hạn input.
+- [x] `src/main/java/com/booknest/activity/ActivityEvent.java`, `ActivityEventType.java`, `ActivityEventRepository.java`, `ActivityService.java`, `ActivityController.java` và `ActivityResponse.java` — snapshot bất biến, history có giới hạn quyền và endpoint.
+- [x] `src/main/resources/db/migration/V9__create_activity_events.sql` — migration cộng thêm và index activity, giữ nguyên bản ghi cũ.
+- [x] `src/main/java/com/booknest/book/BookRepository.java`, `BookCopyRepository.java`, `BookService.java`, `BookController.java`, `BookCopyService.java` và `BookCopyController.java` — filter/sort/page sách bằng database, truyền actor khi giữ reservation và tương thích list consumer hiện có.
+- [x] `LoanRepository.java`, `LoanService.java` và `LoanController.java` — filter/sort/page loan trong khi giữ ownership và điều kiện gia hạn.
+- [x] `src/main/java/com/booknest/reservation/ReservationRepository.java`, `ReservationService.java` và `loan/LoanService.java` — ghi event vòng đời với actor xác thực từ server, cùng transaction.
+- [x] `src/main/java/com/booknest/book/BookCopyService.java` và `BookCopyController.java` — giữ actor đã xác thực khi thao tác chuyển copy sang sẵn sàng làm sách chờ được giữ.
+- [x] `src/main/java/com/booknest/security/SecurityConfig.java`, `web/ApiExceptionHandler.java` và `static/js/api.js` — bảo vệ activity, xử lý/hiển thị an toàn lỗi query parameter.
+- [x] `src/main/resources/static/index.html`, `css/styles.css`, `js/books.js`, `js/loans.js`, `js/reservations.js` và `js/app.js` — điều khiển discovery accessible và activity timeline; giữ render DOM an toàn.
+- [x] `src/test/java/com/booknest/book/BookControllerTests.java`, `loan/LoanControllerTests.java`, `reservation/ReservationControllerTests.java` và test mới `activity/ActivityControllerTests.java` — search/paging/sort, lifecycle, quyền, privacy và rollback.
+- [x] `src/test/resources/cleanup.sql` — cô lập activity row giữa các test.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — tài liệu hóa API/UI và kết quả kiểm chứng.
+
+**Trạng thái:** Đã hoàn tất triển khai và kiểm chứng; Phase 6 đang chờ người dùng nghiệm thu. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 59 test, 0 lỗi/failure/skip. JavaScript syntax, `git diff --check`, `docker compose config --quiet`, rebuild Compose, migration V9, readiness HTTP 200 của app/DB, query PostgreSQL cho catalog/search/loan/activity, và browser flow staff/patron đều đạt. Dữ liệu PostgreSQL hiện có được giữ nguyên. Tình trạng account bar gây tràn ngang ở viewport 360px đã được ghi nhận từ phase trước và nằm ngoài phạm vi Phase 6.

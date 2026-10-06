@@ -27,8 +27,18 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 	const booksEmpty = document.querySelector("#books-empty");
 	const booksLoading = document.querySelector("#books-loading");
 	const booksFeedback = document.querySelector("#books-feedback");
+	const booksSearchForm = document.querySelector("#books-search-form");
+	const booksQuery = document.querySelector("#books-query");
+	const booksGenre = document.querySelector("#books-genre");
+	const booksAvailability = document.querySelector("#books-availability");
+	const booksSort = document.querySelector("#books-sort");
+	const booksDirection = document.querySelector("#books-direction");
+	const booksPagination = document.querySelector("#books-pagination");
+	const booksPageStatus = document.querySelector("#books-page-status");
 
 	let books = [];
+	let bookPage = 0;
+	let bookPageResult = null;
 	let selectedBookId = null;
 	let role = "PUBLIC";
 
@@ -118,7 +128,7 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 	}
 
 	function updateSummary() {
-		document.querySelector("#book-total").textContent = String(books.length);
+		document.querySelector("#book-total").textContent = String(bookPageResult?.totalElements || 0);
 		document.querySelector("#copy-total").textContent =
 			String(books.reduce((sum, book) => sum + book.totalCopies, 0));
 		document.querySelector("#copy-available").textContent =
@@ -131,6 +141,21 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 		booksLoading.hidden = true;
 		booksTable.hidden = books.length === 0;
 		booksEmpty.hidden = books.length !== 0;
+		if (books.length === 0) {
+			const hasFilters = booksQuery.value || booksGenre.value || booksAvailability.value;
+			document.querySelector("#books-empty h3").textContent = hasFilters
+				? "Không tìm thấy đầu sách phù hợp"
+				: "Thư viện chưa có đầu sách";
+			document.querySelector("#books-empty p").textContent = hasFilters
+				? "Thử thay đổi từ khóa hoặc bộ lọc."
+				: "Thêm đầu sách đầu tiên để bắt đầu quản lý các bản sách.";
+		}
+		booksPagination.hidden = !bookPageResult || bookPageResult.totalPages <= 1;
+		if (bookPageResult) {
+			booksPageStatus.textContent = `Trang ${bookPageResult.page + 1} / ${Math.max(bookPageResult.totalPages, 1)} · ${bookPageResult.totalElements} đầu sách`;
+			document.querySelector("#books-previous").disabled = bookPageResult.first;
+			document.querySelector("#books-next").disabled = bookPageResult.last;
+		}
 	}
 
 	async function loadBooks() {
@@ -139,12 +164,45 @@ export function initializeBooks(showToast, onLoansChanged = () => Promise.resolv
 		booksEmpty.hidden = true;
 		setFeedback(booksFeedback, "");
 		try {
-			books = await apiRequest("/api/books");
+			const params = new URLSearchParams({
+				q: booksQuery.value.trim(),
+				genre: booksGenre.value.trim(),
+				availability: booksAvailability.value,
+				page: String(bookPage),
+				size: "20",
+				sort: booksSort.value,
+				direction: booksDirection.value
+			});
+			bookPageResult = await apiRequest(`/api/books?${params}`);
+			if (bookPageResult.totalPages > 0 && bookPage >= bookPageResult.totalPages) {
+				bookPage = bookPageResult.totalPages - 1;
+				return loadBooks();
+			}
+			books = bookPageResult.items;
 			renderBooks();
 		} catch (error) {
 			booksLoading.hidden = true;
 			setFeedback(booksFeedback, userMessage(error), true);
 		}
+
+		booksSearchForm.addEventListener("submit", event => {
+			event.preventDefault();
+			bookPage = 0;
+			loadBooks();
+		});
+		document.querySelector("#books-reset").addEventListener("click", () => {
+			booksSearchForm.reset();
+			bookPage = 0;
+			loadBooks();
+		});
+		document.querySelector("#books-previous").addEventListener("click", () => {
+			bookPage = Math.max(0, bookPage - 1);
+			loadBooks();
+		});
+		document.querySelector("#books-next").addEventListener("click", () => {
+			bookPage += 1;
+			loadBooks();
+		});
 	}
 
 	function setRole(nextRole) {

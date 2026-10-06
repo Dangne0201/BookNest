@@ -121,9 +121,9 @@ class LoanControllerTests {
 		assertEquals(BookCopy.Status.ON_LOAN, bookCopyRepository.findById(copyId).orElseThrow().getStatus());
 		mockMvc.perform(get("/api/loans").with(user("staff-b").roles("STAFF")))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].id").value(loanId))
-				.andExpect(jsonPath("$[0].memberName").value("Loan Test Member"))
-				.andExpect(jsonPath("$[0].bookTitle").value("Loan Test Book"));
+				.andExpect(jsonPath("$.items[0].id").value(loanId))
+				.andExpect(jsonPath("$.items[0].memberName").value("Loan Test Member"))
+				.andExpect(jsonPath("$.items[0].bookTitle").value("Loan Test Book"));
 
 		mockMvc.perform(post("/api/loans/{loanId}/return", loanId)
 						.with(user("staff-b").roles("STAFF"))
@@ -242,7 +242,7 @@ class LoanControllerTests {
 		mockMvc.perform(get("/api/loans")
 						.with(user("staff-a").roles("STAFF")))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].renewalEligible").value(true));
+				.andExpect(jsonPath("$.items[0].renewalEligible").value(true));
 
 		mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
 						.with(user("staff-b").roles("STAFF"))
@@ -314,7 +314,7 @@ class LoanControllerTests {
 		mockMvc.perform(get("/api/loans")
 						.with(user("staff-a").roles("STAFF")))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].renewalEligible").value(false));
+				.andExpect(jsonPath("$.items[0].renewalEligible").value(false));
 
 		reservationRepository.deleteAll();
 		BookCopy heldCopy = bookCopyRepository.saveAndFlush(new BookCopy(book, BookCopy.Status.ON_HOLD));
@@ -328,6 +328,75 @@ class LoanControllerTests {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.error").value("loan_has_reservation_queue"));
 		assertNull(loanRepository.findById(loanId).orElseThrow().getRenewedAt());
+	}
+
+	@Test
+	void searchesFiltersSortsAndPaginatesLoansWithinPatronOwnership() throws Exception {
+		long activeLoanId = checkout(memberId, copyId, "staff-a");
+		Book secondBook = bookRepository.save(new Book("Another Loan Title", "Author", null, null, null, null));
+		BookCopy secondCopy = bookCopyRepository.save(new BookCopy(secondBook, BookCopy.Status.AVAILABLE));
+		long returnedLoanId = checkout(memberId, secondCopy.getId(), "staff-a");
+		mockMvc.perform(post("/api/loans/{loanId}/return", returnedLoanId)
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isOk());
+
+		mockMvc.perform(get("/api/loans")
+						.with(user("staff-a").roles("STAFF"))
+						.param("q", "ANOTHER")
+						.param("state", "RETURNED")
+						.param("sort", "memberName")
+						.param("direction", "asc"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items.length()").value(1))
+				.andExpect(jsonPath("$.items[0].id").value(returnedLoanId))
+				.andExpect(jsonPath("$.totalElements").value(1));
+
+		mockMvc.perform(get("/api/loans")
+						.with(user("staff-b").roles("STAFF"))
+						.param("state", "ACTIVE")
+						.param("sort", "dueDate")
+						.param("size", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items.length()").value(1))
+				.andExpect(jsonPath("$.items[0].id").value(activeLoanId))
+				.andExpect(jsonPath("$.totalElements").value(1))
+				.andExpect(jsonPath("$.totalPages").value(1));
+
+		var patronA = accountService.registerPatron(new RegistrationRequest(
+				"loan-reader-a", "reader-password", "Loan Reader A", null, null, null
+		));
+		var patronB = accountService.registerPatron(new RegistrationRequest(
+				"loan-reader-b", "reader-password", "Loan Reader B", null, null, null
+		));
+		Book patronBookA = bookRepository.save(new Book("Patron A Loan", "Author", null, null, null, null));
+		BookCopy patronCopyA = bookCopyRepository.save(new BookCopy(patronBookA, BookCopy.Status.AVAILABLE));
+		long patronLoanId = checkout(patronA.memberId(), patronCopyA.getId(), "staff-a");
+		Book patronBookB = bookRepository.save(new Book("Patron B Loan", "Author", null, null, null, null));
+		BookCopy patronCopyB = bookCopyRepository.save(new BookCopy(patronBookB, BookCopy.Status.AVAILABLE));
+		checkout(patronB.memberId(), patronCopyB.getId(), "staff-a");
+
+		mockMvc.perform(get("/api/loans")
+						.with(user("loan-reader-a").roles("PATRON")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElements").value(1))
+				.andExpect(jsonPath("$.items[0].id").value(patronLoanId))
+				.andExpect(jsonPath("$.items[0].memberName").value("Loan Reader A"));
+	}
+
+	@Test
+	void rejectsInvalidLoanPagingSortingAndStateFilters() throws Exception {
+		for (String query : new String[]{
+				"?page=-1",
+				"?size=101",
+				"?sort=member.passwordHash",
+				"?direction=sideways",
+				"?state=ACTIVE%20OR%201%3D1"
+		}) {
+			mockMvc.perform(get("/api/loans" + query)
+							.with(user("staff-a").roles("STAFF")))
+					.andExpect(status().isBadRequest());
+		}
 	}
 
 	@Test
