@@ -2,6 +2,8 @@ package com.booknest.reservation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
+import java.util.Set;
 
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -13,6 +15,11 @@ import org.springframework.data.repository.query.Param;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
 	boolean existsByActiveMemberBookKey(String activeMemberBookKey);
+
+	boolean existsByBookIdAndStatusIn(Long bookId, Collection<Reservation.Status> statuses);
+
+	@Query("select distinct reservation.book.id from Reservation reservation where reservation.status in :statuses")
+	Set<Long> findDistinctBookIdsByStatusIn(@Param("statuses") Collection<Reservation.Status> statuses);
 
 	long countByBookIdAndStatusAndIdLessThan(Long bookId, Reservation.Status status, Long id);
 

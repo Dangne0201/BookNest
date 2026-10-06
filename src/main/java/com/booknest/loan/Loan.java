@@ -1,6 +1,7 @@
 package com.booknest.loan;
 
 import java.time.LocalDate;
+import java.time.Instant;
 
 import com.booknest.account.StaffAccount;
 import com.booknest.book.BookCopy;
@@ -47,6 +48,13 @@ public class Loan {
 	@Column(name = "return_date")
 	private LocalDate returnDate;
 
+	@Column(name = "renewed_at")
+	private Instant renewedAt;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "renewed_by_id")
+	private StaffAccount renewedBy;
+
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "checkout_staff_id", nullable = false)
 	private StaffAccount checkedOutBy;
@@ -79,6 +87,12 @@ public class Loan {
 		this.activeCopyId = null;
 	}
 
+	public void renewUntil(LocalDate newDueDate, StaffAccount renewedBy) {
+		this.dueDate = newDueDate;
+		this.renewedAt = Instant.now();
+		this.renewedBy = renewedBy;
+	}
+
 	public Long getId() {
 		return id;
 	}
@@ -101,6 +115,14 @@ public class Loan {
 
 	public LocalDate getReturnDate() {
 		return returnDate;
+	}
+
+	public Instant getRenewedAt() {
+		return renewedAt;
+	}
+
+	public StaffAccount getRenewedBy() {
+		return renewedBy;
 	}
 
 	public StaffAccount getCheckedOutBy() {

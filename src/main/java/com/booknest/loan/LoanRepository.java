@@ -28,7 +28,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 			"bookCopy",
 			"bookCopy.book",
 			"checkedOutBy",
-			"returnedBy"
+			"returnedBy",
+			"renewedBy"
 	})
 	List<Loan> findAllByOrderByCheckoutDateDescIdDesc();
 
@@ -38,7 +39,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 			"bookCopy",
 			"bookCopy.book",
 			"checkedOutBy",
-			"returnedBy"
+			"returnedBy",
+			"renewedBy"
 	})
 	List<Loan> findAllByMemberAccountUsernameOrderByCheckoutDateDescIdDesc(String username);
 
@@ -48,7 +50,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 			"bookCopy",
 			"bookCopy.book",
 			"checkedOutBy",
-			"returnedBy"
+			"returnedBy",
+			"renewedBy"
 	})
 	Optional<Loan> findWithDetailsById(Long id);
 }

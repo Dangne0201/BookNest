@@ -57,6 +57,11 @@ public class ApiExceptionHandler {
 				case "copy_status_managed_by_loans" ->
 						"Loan status is managed by checkout and return operations.";
 				case "loan_already_returned" -> "This loan has already been returned.";
+				case "loan_not_active" -> "Only an active loan can be renewed.";
+				case "loan_overdue" -> "An overdue loan cannot be renewed.";
+				case "loan_already_renewed" -> "This loan has already used its renewal.";
+				case "loan_has_reservation_queue" ->
+						"This title has an active reservation, so the loan cannot be renewed.";
 				case "member_account_linked" -> "A member linked to a login account cannot be deleted.";
 				case "book_copy_reserved" -> "This copy is currently held for a reservation.";
 				case "reservation_already_active" -> "This member already has an active reservation for this title.";

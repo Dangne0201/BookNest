@@ -10,12 +10,18 @@ import java.util.concurrent.TimeUnit;
 
 import com.booknest.account.StaffAccount;
 import com.booknest.account.StaffAccountRepository;
+import com.booknest.account.AccountService;
+import com.booknest.account.RegistrationRequest;
 import com.booknest.book.Book;
 import com.booknest.book.BookCopy;
 import com.booknest.book.BookCopyRepository;
 import com.booknest.book.BookRepository;
 import com.booknest.member.Member;
 import com.booknest.member.MemberRepository;
+import com.booknest.reservation.Reservation;
+import com.booknest.reservation.ReservationRepository;
+import com.booknest.reservation.ReservationRequest;
+import com.booknest.reservation.ReservationService;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -62,6 +69,15 @@ class LoanControllerTests {
 
 	@Autowired
 	private StaffAccountRepository staffAccountRepository;
+
+	@Autowired
+	private ReservationRepository reservationRepository;
+
+	@Autowired
+	private AccountService accountService;
+
+	@Autowired
+	private ReservationService reservationService;
 
 	private long memberId;
 	private long copyId;
@@ -219,6 +235,137 @@ class LoanControllerTests {
 	}
 
 	@Test
+	void staffCanRenewAnEligibleLoanOnceAndTheRenewalActorIsRecorded() throws Exception {
+		long loanId = checkout(memberId, copyId, "staff-a");
+		LocalDate originalDueDate = loanRepository.findById(loanId).orElseThrow().getDueDate();
+
+		mockMvc.perform(get("/api/loans")
+						.with(user("staff-a").roles("STAFF")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].renewalEligible").value(true));
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
+						.with(user("staff-b").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.renewed").value(true))
+				.andExpect(jsonPath("$.renewedBy").value("staff-b"))
+				.andExpect(jsonPath("$.renewedAt").isNotEmpty())
+				.andExpect(jsonPath("$.renewalEligible").value(false))
+				.andExpect(jsonPath("$.dueDate").value(originalDueDate.plusDays(14).toString()));
+
+		Loan renewedLoan = loanRepository.findWithDetailsById(loanId).orElseThrow();
+		assertEquals(originalDueDate.plusDays(14), renewedLoan.getDueDate());
+		assertEquals("staff-b", renewedLoan.getRenewedBy().getUsername());
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("loan_already_renewed"));
+		assertEquals(originalDueDate.plusDays(14), loanRepository.findById(loanId).orElseThrow().getDueDate());
+		assertEquals(BookCopy.Status.ON_LOAN, bookCopyRepository.findById(copyId).orElseThrow().getStatus());
+	}
+
+	@Test
+	void rejectsRenewalForOverdueAndReturnedLoans() throws Exception {
+		LocalDate today = LocalDate.now();
+		Loan overdueLoan = loanRepository.saveAndFlush(new Loan(
+				memberRepository.findById(memberId).orElseThrow(),
+				bookCopyRepository.findById(copyId).orElseThrow(),
+				today.minusDays(20),
+				today.minusDays(6),
+				staffAccountRepository.findByUsername("staff-a").orElseThrow()
+		));
+		BookCopy copy = bookCopyRepository.findById(copyId).orElseThrow();
+		copy.updateStatus(BookCopy.Status.ON_LOAN);
+		bookCopyRepository.save(copy);
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", overdueLoan.getId())
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("loan_overdue"));
+		assertEquals(today.minusDays(6), loanRepository.findById(overdueLoan.getId()).orElseThrow().getDueDate());
+
+		mockMvc.perform(post("/api/loans/{loanId}/return", overdueLoan.getId())
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isOk());
+		mockMvc.perform(post("/api/loans/{loanId}/renew", overdueLoan.getId())
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("loan_not_active"));
+	}
+
+	@Test
+	void activeWaitingOrHeldReservationsBlockRenewal() throws Exception {
+		long loanId = checkout(memberId, copyId, "staff-a");
+		Book book = bookRepository.findAll().get(0);
+		Member queuedMember = memberRepository.saveAndFlush(new Member("Queued Reader", null, null, null));
+		reservationRepository.saveAndFlush(new Reservation(queuedMember, book));
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("loan_has_reservation_queue"));
+		mockMvc.perform(get("/api/loans")
+						.with(user("staff-a").roles("STAFF")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].renewalEligible").value(false));
+
+		reservationRepository.deleteAll();
+		BookCopy heldCopy = bookCopyRepository.saveAndFlush(new BookCopy(book, BookCopy.Status.ON_HOLD));
+		Reservation heldReservation = new Reservation(queuedMember, book);
+		heldReservation.hold(heldCopy);
+		reservationRepository.saveAndFlush(heldReservation);
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
+						.with(user("staff-a").roles("STAFF"))
+						.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("loan_has_reservation_queue"));
+		assertNull(loanRepository.findById(loanId).orElseThrow().getRenewedAt());
+	}
+
+	@Test
+	void patronCanRenewOnlyTheirOwnLoanAndWritesRequireCsrf() throws Exception {
+		var patron = accountService.registerPatron(new RegistrationRequest(
+				"renewing-patron", "reader-password", "Renewing Patron", null, null, null
+		));
+		var otherPatron = accountService.registerPatron(new RegistrationRequest(
+				"other-patron", "reader-password", "Other Patron", null, null, null
+		));
+		long patronLoanId = checkout(patron.memberId(), copyId, "staff-a");
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", patronLoanId)
+						.with(user("other-patron").roles("PATRON"))
+						.with(csrf()))
+				.andExpect(status().isNotFound());
+		assertEquals("renewing-patron",
+				staffAccountRepository.findById(patron.id()).orElseThrow().getUsername());
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", patronLoanId)
+						.with(user("renewing-patron").roles("PATRON")))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", patronLoanId)
+						.with(user("renewing-patron").roles("PATRON"))
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.renewedBy").value("renewing-patron"));
+
+		mockMvc.perform(post("/api/loans/{loanId}/renew", patronLoanId)
+						.with(user("other-patron").roles("PATRON"))
+						.with(csrf()))
+				.andExpect(status().isNotFound());
+		assertEquals(StaffAccount.Role.PATRON,
+				staffAccountRepository.findById(otherPatron.id()).orElseThrow().getRole());
+	}
+
+	@Test
 	void serializesConcurrentCheckoutAttemptsForTheSameCopy() throws Exception {
 		CountDownLatch start = new CountDownLatch(1);
 		ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -235,6 +382,66 @@ class LoanControllerTests {
 			);
 			assertEquals(1, loanRepository.count());
 			assertEquals(BookCopy.Status.ON_LOAN, bookCopyRepository.findById(copyId).orElseThrow().getStatus());
+		} finally {
+			executor.shutdownNow();
+		}
+	}
+
+	@Test
+	void serializesRenewalAgainstNewReservationForTheSameTitle() throws Exception {
+		long loanId = checkout(memberId, copyId, "staff-a");
+		LocalDate originalDueDate = loanRepository.findById(loanId).orElseThrow().getDueDate();
+		Member queuedMember = memberRepository.saveAndFlush(new Member("Concurrent Queue Reader", null, null, null));
+		long bookId = bookRepository.findAll().get(0).getId();
+		CountDownLatch start = new CountDownLatch(1);
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+		try {
+			Future<Integer> renewal = executor.submit(() -> renewAfter(start, loanId, "staff-a"));
+			Future<?> reservation = executor.submit(() -> {
+				start.await();
+				reservationService.create(new ReservationRequest(bookId, queuedMember.getId()), "staff-b");
+				return null;
+			});
+			start.countDown();
+
+			int renewalStatus = renewal.get(10, TimeUnit.SECONDS).intValue();
+			reservation.get(10, TimeUnit.SECONDS);
+			assertTrue(renewalStatus == 200 || renewalStatus == 409);
+			assertEquals(1, reservationRepository.count());
+			Loan loan = loanRepository.findById(loanId).orElseThrow();
+			if (renewalStatus == 409) {
+				assertNull(loan.getRenewedAt());
+				assertEquals(originalDueDate, loan.getDueDate());
+			} else {
+				assertTrue(loan.getRenewedAt() != null);
+				assertEquals(originalDueDate.plusDays(14), loan.getDueDate());
+			}
+		} finally {
+			executor.shutdownNow();
+		}
+	}
+
+	@Test
+	void serializesConcurrentRenewalAttempts() throws Exception {
+		long loanId = checkout(memberId, copyId, "staff-a");
+		LocalDate originalDueDate = loanRepository.findById(loanId).orElseThrow().getDueDate();
+		CountDownLatch start = new CountDownLatch(1);
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+		try {
+			Future<Integer> first = executor.submit(() -> renewAfter(start, loanId, "staff-a"));
+			Future<Integer> second = executor.submit(() -> renewAfter(start, loanId, "staff-b"));
+			start.countDown();
+
+			int firstStatus = first.get(10, TimeUnit.SECONDS).intValue();
+			int secondStatus = second.get(10, TimeUnit.SECONDS).intValue();
+			assertTrue(
+					(firstStatus == 200 && secondStatus == 409) || (firstStatus == 409 && secondStatus == 200),
+					"Exactly one concurrent renewal must succeed."
+			);
+			Loan loan = loanRepository.findWithDetailsById(loanId).orElseThrow();
+			assertEquals(originalDueDate.plusDays(14), loan.getDueDate());
+			assertTrue("staff-a".equals(loan.getRenewedBy().getUsername())
+					|| "staff-b".equals(loan.getRenewedBy().getUsername()));
 		} finally {
 			executor.shutdownNow();
 		}
@@ -269,6 +476,16 @@ class LoanControllerTests {
 						.with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(checkoutRequest(memberId, copyId)))
+				.andReturn()
+				.getResponse()
+				.getStatus();
+	}
+
+	private int renewAfter(CountDownLatch start, long loanId, String staff) throws Exception {
+		start.await();
+		return mockMvc.perform(post("/api/loans/{loanId}/renew", loanId)
+						.with(user(staff).roles("STAFF"))
+						.with(csrf()))
 				.andReturn()
 				.getResponse()
 				.getStatus();

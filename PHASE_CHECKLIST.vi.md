@@ -482,3 +482,48 @@ Người dùng muốn có database local với dữ liệu để tự khám phá
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — ghi phạm vi đã duyệt, ledger và kết quả kiểm chứng thực tế.
 
 **Trạng thái:** Lát cắt dữ liệu demo đã duyệt, triển khai, kiểm chứng và được người dùng nghiệm thu. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 45 test, 0 lỗi/thất bại/bỏ qua; `docker compose config --quiet` đạt và Docker image cuối đã build thành công. Dữ liệu PostgreSQL cũ được giữ nguyên khi migrate Flyway V6→V7. Số lượng trước/sau seed chuyển từ 3 account/1 book/0 copy/1 member/0 loan/0 reservation sang 6/4/9/4/3/4, cộng một seed marker. Khởi động lại app giữ nguyên số lượng, readiness HTTP 200 và Compose hiện chạy với khởi tạo demo đã tắt. Kiểm tra trình duyệt xác nhận catalog công khai, tài khoản staff xem sách/member/loan/hàng chờ và patron chỉ xem loan cùng đặt chỗ của chính mình. Không volume/database/container hay tài nguyên Docker ngoài phạm vi nào bị xóa/reset.
+
+### Phase 5 — Bổ sung gia hạn lượt mượn (hàng chờ đã có; đã triển khai, chờ nghiệm thu)
+
+Phần đặt trước đã triển khai trước đó gồm hàng chờ FIFO, giữ sách khi trả và hủy/đẩy hàng chờ. Lát cắt này bổ sung chính sách gia hạn một lần và nút thao tác trên giao diện; không viết lại hoặc làm hỏng hàng chờ hiện có.
+
+#### Phạm vi đã triển khai
+
+- Mỗi lượt mượn được gia hạn tối đa một lần. Chỉ gia hạn lượt đang mượn và chưa quá hạn; từ chối nếu đầu sách có lượt đặt trước đang `WAITING` hoặc `HELD`.
+- Patron chỉ gia hạn lượt của chính mình; staff/admin có thể gia hạn để hỗ trợ nghiệp vụ thư viện. Lấy tài khoản thao tác từ session đã xác thực, tuyệt đối không nhận account/member/staff ID từ client.
+- Lưu trạng thái đã gia hạn, thời điểm và tài khoản thực hiện để bản ghi nghiệp vụ giữ được người thao tác.
+- Thêm endpoint gia hạn có transaction. Khóa lượt mượn và đầu sách theo cùng thứ tự với luồng trả hiện tại; đồng bộ gia hạn với tạo/hủy đặt chỗ để bạn đọc mới không bị bỏ qua do request đồng thời.
+- Bổ sung trạng thái gia hạn trong API và hiển thị nút **Gia hạn** cùng kết quả trên giao diện Mượn/Hoạt động hiện tại. Backend luôn là nguồn quyết định; UI ẩn/vô hiệu hóa thao tác khi biết chắc không hợp lệ và hiển thị lỗi conflict an toàn, có tiếng Việt.
+- Giữ nguyên mượn, trả, quyền sở hữu patron, hàng chờ, CSRF và session. Không tự động gia hạn, email, gia hạn thêm lần nữa, gia hạn lượt quá hạn hoặc làm hệ thống event-sourcing/lịch sử phức tạp.
+
+#### Cần người dùng chọn chính sách trước khi triển khai
+
+Người dùng chọn kỳ hạn gia hạn 14 ngày lịch hiện tại, tính từ hạn trả đang có:
+
+- **Đã duyệt:** cộng thêm 14 ngày lịch vào hạn trả hiện tại.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Người dùng đã chọn quy tắc tính ngày hạn trước khi triển khai: cộng 14 ngày lịch vào hạn trả hiện tại.
+- [x] Patron hợp lệ gia hạn được lượt của mình khi đang mượn, chưa quá hạn và chưa gia hạn; chỉ thành công đúng một lần. Staff/admin có thể gia hạn cho nghiệp vụ; patron không thể gia hạn lượt của người khác.
+- [x] Lượt đã trả, quá hạn, đã gia hạn hoặc bị đặt trước chặn đều bị từ chối bằng conflict an toàn; trạng thái loan/copy/hàng chờ không đổi.
+- [x] Hạn mới đúng chính sách 14 ngày lịch người dùng chọn. API/UI hiển thị trạng thái và actor gia hạn, không nhận actor ID từ client.
+- [x] Nhiều yêu cầu gia hạn đồng thời chỉ có tối đa một request thành công; tạo hàng chờ đồng thời với gia hạn không bỏ qua bạn đọc hoặc để lại trạng thái dang dở (test đồng thời tự động dùng H2).
+- [x] UI chỉ hiển thị thao tác phù hợp, tải lại lượt mượn/hoạt động sau thành công, có trạng thái tải/thành công/lỗi mạng/conflict accessible và an toàn.
+- [x] Mượn, trả, đặt chỗ, authentication/authorization, CSRF và responsive hiện tại không bị ảnh hưởng bởi lát cắt này. Browser ở 360px phát hiện account bar khi đăng nhập (lỗi đã có từ trước), làm tràn toàn trang; bảng loan vẫn nằm trong vùng cuộn ngang. Phần gia hạn không thay CSS header; lỗi account bar được theo dõi riêng.
+- [x] Test tập trung bao phủ chính sách, role/quyền sở hữu, đồng thời/tính nhất quán và công thức ngày hạn đã chọn; ghi chính xác kết quả `clean verify`, Compose, migration/build với volume PostgreSQL hiện có và luồng trình duyệt.
+- [x] README, AGENTS.md và hai checklist song ngữ mô tả chính sách gia hạn đã triển khai và kết quả kiểm chứng.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/java/com/booknest/loan/Loan.java`, `LoanService.java`, `LoanRepository.java`, `LoanController.java` và `LoanResponse.java` — trạng thái, chính sách, khóa transaction và API gia hạn.
+- [x] `src/main/resources/db/migration/V8__add_loan_renewal.sql` — bổ sung theo hướng tiến lên, giữ nguyên lịch sử lượt mượn.
+- [x] `src/main/java/com/booknest/reservation/ReservationRepository.java` và `ReservationService.java` — truy vấn reservation đang chờ/đang giữ để kiểm tra điều kiện gia hạn.
+- [x] `src/main/java/com/booknest/web/ApiExceptionHandler.java` và `src/main/resources/static/js/api.js` — ánh xạ lỗi gia hạn an toàn.
+- [x] `src/main/resources/static/js/loans.js` — nút gia hạn theo role và trạng thái, không cần sửa markup/CSS.
+- [x] `src/test/java/com/booknest/loan/LoanControllerTests.java` — chính sách, quyền sở hữu, CSRF, gia hạn đồng thời và tạo hàng chờ đồng thời.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — tài liệu hóa chính sách, triển khai và kết quả xác minh.
+
+**Kiểm chứng:** `.\mvnw.cmd --no-transfer-progress clean verify` đạt 51 test, 0 lỗi/thất bại/bỏ qua. Kiểm tra cú pháp JavaScript, `git diff --check` và `docker compose config --quiet` đều đạt. `docker compose up -d --build` build lại app và chạy với volume PostgreSQL hiện có; Flyway V8 áp dụng thành công, readiness HTTP 200 với app/DB UP. Truy vấn DB ghi nhận 6 account, 4 book, 9 copy, 4 member, 5 loan, 6 reservation và đúng 1 loan đã gia hạn. Loan demo-patron có hạn mới 2026-10-31 và actor `demo-patron`. Trình duyệt xác nhận hộp thoại, hạn đổi từ 2026-10-17 sang 2026-10-31, actor/trạng thái vẫn còn sau khi app restart và đăng nhập lại, nút gia hạn không còn hiện. Toàn trang khi đăng nhập còn tràn ngang ở 360px do account bar có từ trước; bảng loan vẫn cuộn ngang bên trong wrapper.
+
+**Trạng thái:** Đã triển khai và kiểm tra chức năng; phần gia hạn đang chờ người dùng nghiệm thu. Không commit/push trước khi được xác nhận.

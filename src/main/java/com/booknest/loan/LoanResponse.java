@@ -1,6 +1,7 @@
 package com.booknest.loan;
 
 import java.time.LocalDate;
+import java.time.Instant;
 
 public record LoanResponse(
 		Long id,
@@ -15,6 +16,10 @@ public record LoanResponse(
 		String checkedOutBy,
 		String returnedBy,
 		boolean active,
-		boolean overdue
+		boolean overdue,
+		boolean renewed,
+		Instant renewedAt,
+		String renewedBy,
+		boolean renewalEligible
 ) {
 }

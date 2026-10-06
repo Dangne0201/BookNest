@@ -2,6 +2,7 @@ package com.booknest.loan;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import com.booknest.account.StaffAccount;
 import com.booknest.account.StaffAccountRepository;
@@ -50,11 +51,12 @@ public class LoanService {
 	public List<LoanResponse> findAll(String username) {
 		LocalDate today = LocalDate.now();
 		StaffAccount account = getStaff(username);
+		Set<Long> booksWithActiveReservations = reservationService.findBookIdsWithActiveReservations();
 		List<Loan> result = account.getRole() == Role.PATRON
 				? loanRepository.findAllByMemberAccountUsernameOrderByCheckoutDateDescIdDesc(username)
 				: loanRepository.findAllByOrderByCheckoutDateDescIdDesc();
 		return result.stream()
-				.map(loan -> toResponse(loan, today))
+				.map(loan -> toResponse(loan, today, booksWithActiveReservations))
 				.toList();
 	}
 
@@ -68,7 +70,7 @@ public class LoanService {
 				|| !loan.getMember().getAccount().getUsername().equals(username))) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "loan_not_found");
 		}
-		return toResponse(loan, LocalDate.now());
+		return toResponse(loan, LocalDate.now(), reservationService.findBookIdsWithActiveReservations());
 	}
 
 	@Transactional
@@ -96,7 +98,11 @@ public class LoanService {
 		LocalDate checkoutDate = LocalDate.now();
 		Loan loan = new Loan(member, copy, checkoutDate, checkoutDate.plusDays(LOAN_PERIOD_DAYS), actor);
 		copy.updateStatus(BookCopy.Status.ON_LOAN);
-		return toResponse(loanRepository.save(loan), checkoutDate);
+		return toResponse(
+				loanRepository.save(loan),
+				checkoutDate,
+				reservationService.findBookIdsWithActiveReservations()
+		);
 	}
 
 	@Transactional
@@ -120,7 +126,11 @@ public class LoanService {
 		);
 		copy.updateStatus(BookCopy.Status.ON_LOAN);
 		reservationService.markFulfilled(reservation);
-		return toResponse(loanRepository.save(loan), checkoutDate);
+		return toResponse(
+				loanRepository.save(loan),
+				checkoutDate,
+				reservationService.findBookIdsWithActiveReservations()
+		);
 	}
 
 	@Transactional
@@ -146,7 +156,48 @@ public class LoanService {
 		LocalDate returnDate = LocalDate.now();
 		loan.returnOn(returnDate, staff);
 		reservationService.holdNext(initialCopy.getBook().getId(), copy);
-		return toResponse(loanRepository.save(loan), returnDate);
+		return toResponse(
+				loanRepository.save(loan),
+				returnDate,
+				reservationService.findBookIdsWithActiveReservations()
+		);
+	}
+
+	@Transactional
+	public LoanResponse renewLoan(long loanId, String username) {
+		Loan loan = loanRepository.findByIdForUpdate(loanId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "loan_not_found"));
+		StaffAccount actor = getStaff(username);
+		if (actor.getRole() == Role.PATRON
+				&& (loan.getMember().getAccount() == null
+				|| !loan.getMember().getAccount().getUsername().equals(username))) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "loan_not_found");
+		}
+
+		if (loan.getReturnDate() != null) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "loan_not_active");
+		}
+		LocalDate today = LocalDate.now();
+		if (loan.getDueDate().isBefore(today)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "loan_overdue");
+		}
+		if (loan.getRenewedAt() != null) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "loan_already_renewed");
+		}
+
+		long bookId = loan.getBookCopy().getBook().getId();
+		bookRepository.findByIdForUpdate(bookId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "loan_book_missing"));
+		if (reservationService.hasActiveReservations(bookId)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "loan_has_reservation_queue");
+		}
+
+		loan.renewUntil(loan.getDueDate().plusDays(LOAN_PERIOD_DAYS), actor);
+		return toResponse(
+				loanRepository.save(loan),
+				today,
+				reservationService.findBookIdsWithActiveReservations()
+		);
 	}
 
 	private StaffAccount getStaff(String username) {
@@ -154,8 +205,11 @@ public class LoanService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized"));
 	}
 
-	private static LoanResponse toResponse(Loan loan, LocalDate today) {
+	private static LoanResponse toResponse(Loan loan, LocalDate today, Set<Long> booksWithActiveReservations) {
 		boolean active = loan.getReturnDate() == null;
+		boolean overdue = active && loan.getDueDate().isBefore(today);
+		boolean renewed = loan.getRenewedAt() != null;
+		long bookId = loan.getBookCopy().getBook().getId();
 		return new LoanResponse(
 				loan.getId(),
 				loan.getMember().getId(),
@@ -169,7 +223,11 @@ public class LoanService {
 				loan.getCheckedOutBy().getUsername(),
 				loan.getReturnedBy() == null ? null : loan.getReturnedBy().getUsername(),
 				active,
-				active && loan.getDueDate().isBefore(today)
+				overdue,
+				renewed,
+				loan.getRenewedAt(),
+				loan.getRenewedBy() == null ? null : loan.getRenewedBy().getUsername(),
+				active && !overdue && !renewed && !booksWithActiveReservations.contains(bookId)
 		);
 	}
 }

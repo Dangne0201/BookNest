@@ -481,3 +481,48 @@ The user asked for a populated local database to explore the application and app
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — record approved scope, file ledger, and actual verification.
 
 **State:** Approved demo-data slice is implemented, verified, and accepted by the user. `.\mvnw.cmd --no-transfer-progress clean verify` passed 45 tests with 0 failures/errors/skips; `docker compose config --quiet` passed and the final Docker image rebuilt successfully. Existing PostgreSQL data was preserved through Flyway V6→V7. Counts changed from the pre-seed 3 accounts/1 book/0 copies/1 member/0 loans/0 reservations to 6/4/9/4/3/4 plus one seed marker. App restart preserved the same counts, readiness returned HTTP 200, and Compose now runs with demo initialization disabled. Browser checks verified public catalog, demo staff access to books/members/loans/queues, and patron access to only their own active loan and held reservation. No volume, database, or unrelated Docker resource was deleted or reset.
+
+### Phase 5 increment — Loan renewal (queue already implemented; implemented, awaiting acceptance)
+
+The earlier reservation work already implements FIFO waiting, holds on return, and cancellation/queue advancement. This increment adds the outstanding one-time loan renewal policy and its browser controls; it must not reimplement or regress the existing reservation queue.
+
+#### Implemented scope
+
+- Allow at most one renewal per loan. Permit renewal only for an active, not-yet-overdue loan; reject a renewal if the title has an active `WAITING` or `HELD` reservation.
+- Patrons may renew only their own loans; staff/admin may renew loans for library operations. Derive the acting account from the authenticated session, never from client-supplied account/member/staff IDs.
+- Persist whether renewed, renewal timestamp, and renewing account so the business record retains the renewal actor.
+- Add a transactional renewal endpoint. Lock the loan and relevant book in the same order used by the existing return path; serialize renewal against reservation creation/cancellation so a newly queued reader cannot be bypassed by a concurrent renewal.
+- Add renewal state to API responses and show a **Gia hạn** action and outcome in the existing Loans/Activity UI. The server remains authoritative; hide/disable actions when renewal is clearly unavailable, while rendering safe localized errors for conflicts.
+- Preserve checkout, return, patron ownership, queue behavior, CSRF, and session rules. No auto-renewal, email, extra renewal, renewal of overdue loans, or activity/event-sourcing subsystem.
+
+#### Policy choice required before implementation
+
+The user selected the existing 14-calendar-day loan period with the current due date as the base:
+
+- **Approved:** add 14 calendar days to the loan's current due date.
+
+#### Acceptance checks
+
+- [x] User selects the due-date calculation rule before implementation: add 14 calendar days to the current due date.
+- [x] A permitted patron can renew their own active, not-overdue, not-yet-renewed loan exactly once; staff/admin can renew for library operations; patrons cannot renew another member's loan.
+- [x] A returned, overdue, already-renewed, or reservation-blocked loan is rejected with a safe conflict response and unchanged loan/copy/queue state.
+- [x] New due date follows the user-selected 14-calendar-day calculation. API/UI expose renewal state and actor without accepting actor IDs from the client.
+- [x] Concurrent renewal attempts produce at most one success; concurrent queue insertion and renewal leave neither a queued patron bypassed nor partial state (automated concurrency tests use H2).
+- [x] UI displays renewal action only where appropriate, refreshes loan/activity data after success, and handles loading, success, network, and conflict states accessibly and safely.
+- [x] Existing checkout, return, reservation, authentication/authorization, CSRF, and responsive behavior remain intact for this increment. A 360px browser check found overall page overflow from the pre-existing signed-in account bar, while the loan table itself stays inside its horizontal-scroll wrapper; renewal did not change header CSS and the account-bar issue is tracked separately.
+- [x] Focused tests cover policy cases, role/ownership checks, concurrency/state consistency, and the selected due-date rule; full `clean verify`, Compose validation, migration/rebuild with the existing PostgreSQL volume, and browser flows are recorded with exact results.
+- [x] README, AGENTS.md, and both bilingual checklists describe the implemented renewal policy and verification.
+
+#### Anticipated file ledger
+
+- [x] `src/main/java/com/booknest/loan/Loan.java`, `LoanService.java`, `LoanRepository.java`, `LoanController.java`, and `LoanResponse.java` — renewal state, policy, locking, and API representation.
+- [x] `src/main/resources/db/migration/V8__add_loan_renewal.sql` — add renewal tracking without changing existing loan history.
+- [x] `src/main/java/com/booknest/reservation/ReservationRepository.java` and `ReservationService.java` — query active waiting/held reservation state for renewal eligibility.
+- [x] `src/main/java/com/booknest/web/ApiExceptionHandler.java` and `src/main/resources/static/js/api.js` — safely map renewal conflicts.
+- [x] `src/main/resources/static/js/loans.js` — provide role-aware renewal controls and status without requiring markup/CSS changes.
+- [x] `src/test/java/com/booknest/loan/LoanControllerTests.java` — cover renewal rules, ownership, CSRF, concurrent renewal, and concurrent queue insertion.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — document policy, implementation, and verified outcomes.
+
+**Verification:** `.\mvnw.cmd --no-transfer-progress clean verify` passed 51 tests with 0 failures/errors/skips. JavaScript syntax checks, `git diff --check`, and `docker compose config --quiet` passed. `docker compose up -d --build` rebuilt and started the app against the existing PostgreSQL volume; Flyway V8 succeeded and readiness returned HTTP 200 with app/DB UP. Database inspection found 6 accounts, 4 books, 9 copies, 4 members, 5 loans, 6 reservations, and exactly 1 renewed loan. The renewed demo-patron loan now has a due date of 2026-10-31 and records `demo-patron` as its actor. Browser test confirmed the confirmation prompt, extension from 2026-10-17 to 2026-10-31, persisted actor/status after app restart and sign-in, and no renewal action after use. The full signed-in page has the noted pre-existing 360px account-bar overflow; the loan table remains horizontally scrollable within its wrapper.
+
+**State:** Implementation and functional verification are complete; the increment is awaiting user acceptance. Do not commit or push until accepted.

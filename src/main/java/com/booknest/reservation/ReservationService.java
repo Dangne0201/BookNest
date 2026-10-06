@@ -1,6 +1,7 @@
 package com.booknest.reservation;
 
 import java.util.List;
+import java.util.Set;
 
 import com.booknest.account.StaffAccount;
 import com.booknest.account.StaffAccountRepository;
@@ -136,6 +137,20 @@ public class ReservationService {
 		waiting.get(0).hold(copy);
 		copy.updateStatus(BookCopy.Status.ON_HOLD);
 		return true;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean hasActiveReservations(long bookId) {
+		return reservationRepository.existsByBookIdAndStatusIn(bookId, activeStatuses());
+	}
+
+	@Transactional(readOnly = true)
+	public Set<Long> findBookIdsWithActiveReservations() {
+		return reservationRepository.findDistinctBookIdsByStatusIn(activeStatuses());
+	}
+
+	private static List<Reservation.Status> activeStatuses() {
+		return List.of(Reservation.Status.WAITING, Reservation.Status.HELD);
 	}
 
 	@Transactional

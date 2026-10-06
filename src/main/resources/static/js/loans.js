@@ -73,8 +73,15 @@ export function initializeLoans(showToast, onInventoryChanged) {
 			? `Lập phiếu: ${loan.checkedOutBy}`
 			: `Nhận trả: ${loan.returnedBy || "—"}`;
 		statusCell.append(actor);
+		if (loan.renewed) {
+			const renewalActor = document.createElement("span");
+			renewalActor.className = "book-author loan-actor";
+			renewalActor.textContent = `Gia hạn bởi: ${loan.renewedBy || "—"}`;
+			statusCell.append(renewalActor);
+		}
 
 		const actionsCell = document.createElement("td");
+		let hasAction = false;
 		if (loan.active && role !== "PATRON") {
 			const returnButton = document.createElement("button");
 			returnButton.type = "button";
@@ -83,7 +90,19 @@ export function initializeLoans(showToast, onInventoryChanged) {
 			returnButton.setAttribute("aria-label", `Trả sách ${loan.bookTitle} cho ${loan.memberName}`);
 			returnButton.addEventListener("click", () => returnLoan(loan, returnButton));
 			actionsCell.append(returnButton);
-		} else {
+			hasAction = true;
+		}
+		if (loan.renewalEligible) {
+			const renewButton = document.createElement("button");
+			renewButton.type = "button";
+			renewButton.className = "button button-secondary button-small";
+			renewButton.textContent = "Gia hạn";
+			renewButton.setAttribute("aria-label", `Gia hạn ${loan.bookTitle} cho ${loan.memberName}`);
+			renewButton.addEventListener("click", () => renewLoan(loan, renewButton));
+			actionsCell.append(renewButton);
+			hasAction = true;
+		}
+		if (!hasAction) {
 			actionsCell.textContent = "—";
 			actionsCell.className = "muted";
 		}
@@ -195,6 +214,23 @@ export function initializeLoans(showToast, onInventoryChanged) {
 			await apiRequest(`/api/loans/${loan.id}/return`, { method: "POST" });
 			await Promise.all([loadLoans(), onInventoryChanged()]);
 			showToast("Đã ghi nhận trả sách.");
+		} catch (error) {
+			showToast(userMessage(error), true);
+			await loadLoans();
+		} finally {
+			button.disabled = false;
+		}
+	}
+
+	async function renewLoan(loan, button) {
+		if (!window.confirm(`Gia hạn “${loan.bookTitle}” thêm 14 ngày từ hạn hiện tại?`)) {
+			return;
+		}
+		button.disabled = true;
+		try {
+			const renewedLoan = await apiRequest(`/api/loans/${loan.id}/renew`, { method: "POST" });
+			await loadLoans();
+			showToast(`Đã gia hạn. Hạn trả mới: ${formatDate(renewedLoan.dueDate)}.`);
 		} catch (error) {
 			showToast(userMessage(error), true);
 			await loadLoans();

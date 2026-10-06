@@ -36,7 +36,7 @@ There is no email-based recovery. A patron or staff member must contact the libr
 ### Use the application
 
 1. Register from **Tạo tài khoản** as a patron, providing a name and password. A linked borrowing profile is created automatically.
-2. Sign in and browse the public catalog. If a copy is available, borrow it immediately; otherwise join the book's reservation queue.
+2. Sign in and browse the public catalog. If a copy is available, borrow it immediately; otherwise join the book's reservation queue. An eligible active loan may be renewed once for 14 calendar days from its current due date; overdue, already-renewed, or reservation-queued titles cannot be renewed.
 3. Use **Hồ sơ của tôi** to update your own contact information. **Hoạt động của tôi** shows only your loans and reservations.
 4. Staff accounts are provisioned by the administrator. Staff maintain books/copies and member records, and confirm physical returns.
 5. Admins use **Tài khoản** to provision staff accounts or reset a verified patron/staff account. Temporary passwords are shown once and require a change at the next sign-in.
@@ -96,6 +96,7 @@ All write requests require a CSRF token. `GET /api/auth/csrf` starts/continues a
 | `/api/members/me` | Patron, CSRF for update | Read/update only the current patron's profile |
 | `/api/members/**` | Staff/admin, CSRF for writes | Manage unlinked member records |
 | `/api/loans/**` | Patron/staff/admin; CSRF for writes | Patrons access own loans; staff/admin manage returns |
+| `POST /api/loans/{loanId}/renew` | Patron (own loan), staff/admin; CSRF | Renew an eligible loan once; add 14 days to its current due date |
 | `/api/reservations/**` | Patron/staff/admin; CSRF for writes | Join, view, cancel, and fulfill reservation queues |
 | `/api/admin/accounts/**` | Admin, CSRF for writes | List accounts, provision staff, and reset patron/staff passwords |
 
@@ -117,7 +118,7 @@ macOS/Linux:
 ./mvnw --no-transfer-progress clean verify
 ```
 
-Automated tests cover registration, roles and authorization, profile ownership, temporary-password flows, reset/session invalidation, CSRF, books/copies, members, checkout/return, concurrent checkout, and reservation queue behavior.
+Automated tests cover registration, roles and authorization, profile ownership, temporary-password flows, reset/session invalidation, CSRF, books/copies, members, checkout/return, one-time renewal eligibility and attribution, concurrent checkout/renewal, renewal-versus-queue serialization, and reservation queue behavior.
 
 ## Current scope
 
