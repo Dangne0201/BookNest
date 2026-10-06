@@ -602,4 +602,38 @@ This phase adds a compact operational overview for staff and administrators. Per
 - [x] `src/test/java/com/booknest/dashboard/DashboardControllerTests.java` — counts, status boundaries, zero values, and role authorization.
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — API contract, accepted scope, implementation ledger, and verified results.
 
-**State:** Accepted by the user on 2026-10-06 and published to GitHub. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips); JavaScript syntax checks, `git diff --check`, and `docker compose config --quiet` passed. Compose rebuilt against the existing PostgreSQL volume; app and database readiness returned HTTP 200/UP, with V9 still the latest migration and no schema change. The STAFF browser session showed all four dashboard values; API response `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3` matched direct PostgreSQL counts `2|3|1|3`. Anonymous API access returned 401; the PATRON browser session showed no operational dashboard and API access returned 403. No data or volume was reset.
+**State:** Accepted by the user on 2026-10-06 and published to GitHub in commit `81c7aa0`. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips); JavaScript syntax checks, `git diff --check`, and `docker compose config --quiet` passed. Compose rebuilt against the existing PostgreSQL volume; app and database readiness returned HTTP 200/UP, with V9 still the latest migration and no schema change. The STAFF browser session showed all four dashboard values; API response `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3` matched direct PostgreSQL counts `2|3|1|3`. Anonymous API access returned 401; the PATRON browser session showed no operational dashboard and API access returned 403. No data or volume was reset.
+
+### Phase 8 — Integrated interface completion and polish
+
+The existing incremental UI slices cover the public catalog, patron profile and activity, staff inventory/member/loan workflows, admin account tools, and the shared dashboard. Phase 8 finishes integration and usability rather than adding new business rules. An existing signed-in header/account bar can overflow horizontally on phone-sized screens; resolve it as part of responsive polish.
+
+#### Approved implementation scope
+
+- Inspect and refine the existing same-origin HTML/CSS/JavaScript screens and role transitions; preserve current product rules, API contracts, server-side authorization, and session/CSRF behavior.
+- Ensure account controls, workspace navigation, cards/forms/dialogs, and tables remain usable at phone, tablet, and desktop widths. Prevent document-level horizontal overflow at 360px and 375px; keep genuinely wide tables scrollable inside their own wrappers.
+- Check keyboard navigation and accessible state changes for login/register/workspace tabs, important dialogs, loading/empty/error feedback, and confirmations; make only focused fixes where checks expose problems.
+- Exercise integrated browser journeys for public catalog access, patron registration/sign-in/profile/loan/reservation/personal activity, staff books/copies/members/checkout/return/queue/dashboard, and admin staff-account provisioning/password reset. Confirm role boundaries and CSRF-aware writes.
+- Verify refresh after mutations, clear success/conflict/network-error messages, confirmation for consequential operations, safe text rendering, and no dead/fake controls.
+- Avoid new dependencies, frontend frameworks, new domain behavior, and schema/API changes unless a concrete UI defect requires a narrowly documented correction.
+
+#### Acceptance checks
+
+- [x] At 360px and 375px viewport widths, `document.documentElement.scrollWidth` does not exceed `clientWidth`; tables, if wider than the viewport, scroll only inside their table wrapper. Layout also remains usable at tablet and desktop widths.
+- [x] Patron and staff primary journeys remain available end to end: public catalog, patron sign-in/profile/loan/reservation/activity, and staff books/members/loans/reservations/dashboard. Earlier UI-slice tests cover their respective mutations; this polish pass rechecked role navigation and dependent screens.
+- [x] Patron/private data remains scoped to the signed-in patron; staff/admin-only tools stay hidden from patrons and are rejected by the API for unauthorized roles.
+- [ ] Keyboard-operated dialogs and visible loading, empty, success, error, and confirmation states work without trapping focus or losing context. Workspace arrow-key navigation and modal open/close controls were checked; full keyboard dialog/focus and confirmation coverage remains.
+- [x] Writes continue to use same-origin API requests and CSRF tokens; successful mutations refresh dependent lists/counts; errors remain understandable and do not report success.
+- [x] Untrusted catalog, profile, account, and history text renders as text, with no injected elements; no committed control is a placeholder or inert action.
+- [x] Relevant automated tests, JavaScript syntax checks, Compose config, and browser checks pass; results and any limitation are recorded in both language checklists.
+- [ ] Admin account provisioning/password-reset UI has been exercised in a real ADMIN browser session. The demo dataset deliberately has no admin, so no administrator credential was rotated or used; backend/API behavior is covered by the automated suite.
+
+#### Anticipated file ledger
+
+- [x] `src/main/resources/static/css/styles.css` — responsive account bar and workspace tabs; maintain contained table overflow.
+- [x] `src/main/resources/static/js/books.js` — register search/reset/pagination handlers once rather than on every list load.
+- [x] `src/main/resources/static/index.html` and remaining UI JavaScript modules — reviewed for the touched journeys; markup and modules remain unchanged because no related defect was found.
+- [x] Relevant existing test files under `src/test/java/com/booknest/` — confirmed the existing full suite covers backend roles, CSRF, and account recovery; no backend behavior changed, so no test source changes were needed.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — maintain the per-file ledger and exact verification/acceptance state.
+
+**State:** Accepted by the user on 2026-10-06 and published to GitHub. The user explicitly accepted the two recorded verification limitations: a live ADMIN UI session and complete keyboard-dialog/focus/confirmation coverage. Responsive CSS and the book-list listener fix are implemented and verified; full `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures/errors/skips), all static JS files passed `node --check`, Compose config/build passed, and readiness is UP/UP. Browser checks confirmed no document overflow at 360/375/768/1280px for STAFF and at 360px for PATRON; the 920px loan table scrolls inside its wrapper while the document remains 345px wide at 360px. Staff navigation showed 4 members, 5 loans, 6 reservation cards, and dashboard values `2/3/1/3`; patron saw only own loan/held reservation/profile with staff/admin tabs and dashboard hidden. Staff received 403 from `/api/admin/accounts`; anonymous users receive 401 where checked. One book search generated exactly one API request; a simulated 503 displayed the expected error. Existing PostgreSQL counts remained `6/4/9/4/5/6` (accounts/books/copies/members/loans/reservations). No admin credential was reset.

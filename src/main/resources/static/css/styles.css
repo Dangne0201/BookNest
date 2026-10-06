@@ -1071,12 +1071,18 @@ tbody tr:hover {
 
 @media (max-width: 760px) {
 	.topbar {
-		height: 66px;
-		padding: 0 5vw;
+		height: auto;
+		min-height: 66px;
+		flex-wrap: wrap;
+		gap: 10px 16px;
+		padding: 10px 5vw;
 	}
 
 	.account-bar {
 		gap: 8px;
+		width: 100%;
+		justify-content: flex-end;
+		flex-wrap: wrap;
 	}
 
 	.account-caption {
@@ -1144,6 +1150,10 @@ tbody tr:hover {
 
 	.page-heading > .button {
 		width: 100%;
+	}
+
+	.workspace-tabs {
+		flex-wrap: wrap;
 	}
 
 	.summary-grid {

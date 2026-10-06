@@ -603,4 +603,38 @@ Phase này bổ sung bảng tổng quan vận hành gọn dành cho nhân viên 
 - [x] `src/test/java/com/booknest/dashboard/DashboardControllerTests.java` — số liệu, ranh giới trạng thái, số 0 và authorization.
 - [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — hợp đồng API, phạm vi đã duyệt, ledger và kết quả kiểm chứng.
 
-**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và Phase đã được xuất bản lên GitHub. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); kiểm tra cú pháp JavaScript, `git diff --check` và `docker compose config --quiet` đều đạt. Compose đã build lại trên volume PostgreSQL hiện có; readiness của app và database trả HTTP 200/UP, V9 vẫn là migration mới nhất và không có thay đổi schema. Phiên trình duyệt STAFF hiển thị đủ bốn số liệu; API trả `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3`, khớp truy vấn count trực tiếp PostgreSQL `2|3|1|3`. API anonymous trả 401; phiên PATRON không có dashboard vận hành và API trả 403. Không reset dữ liệu hay volume.
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và Phase đã được xuất bản lên GitHub trong commit `81c7aa0`. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); kiểm tra cú pháp JavaScript, `git diff --check` và `docker compose config --quiet` đều đạt. Compose đã build lại trên volume PostgreSQL hiện có; readiness của app và database trả HTTP 200/UP, V9 vẫn là migration mới nhất và không có thay đổi schema. Phiên trình duyệt STAFF hiển thị đủ bốn số liệu; API trả `availableCopies=2`, `activeLoans=3`, `overdueLoans=1`, `activeReservations=3`, khớp truy vấn count trực tiếp PostgreSQL `2|3|1|3`. API anonymous trả 401; phiên PATRON không có dashboard vận hành và API trả 403. Không reset dữ liệu hay volume.
+
+### Phase 8 — Hoàn thiện và trau chuốt giao diện tích hợp
+
+Các lát cắt UI tăng dần hiện đã bao gồm danh mục công khai, hồ sơ/lịch sử bạn đọc, quản lý sách/thành viên/lượt mượn cho nhân viên, công cụ tài khoản cho admin và dashboard dùng chung. Phase 8 hoàn thiện tích hợp và trải nghiệm sử dụng, không bổ sung quy tắc nghiệp vụ. Account bar khi đăng nhập hiện có thể gây tràn ngang trên màn hình nhỏ; cần xử lý trong phần responsive.
+
+#### Phạm vi triển khai đã duyệt
+
+- Rà soát và tinh chỉnh các màn hình HTML/CSS/JavaScript cùng origin và luồng đổi vai trò; giữ nguyên quy tắc sản phẩm, API, phân quyền backend và session/CSRF.
+- Đảm bảo thanh tài khoản, điều hướng workspace, thẻ/form/dialog và bảng dùng được ở điện thoại, tablet và desktop. Không để toàn trang tràn ngang ở viewport 360px/375px; bảng rộng vẫn cuộn trong wrapper riêng.
+- Kiểm tra điều hướng bàn phím và trạng thái trợ năng của tab đăng nhập/đăng ký/workspace, dialog quan trọng, trạng thái loading/empty/error và xác nhận; chỉ sửa có mục tiêu khi phát hiện vấn đề.
+- Chạy các luồng browser tích hợp: danh mục công khai; bạn đọc đăng ký/đăng nhập/hồ sơ/mượn/đặt trước/hoạt động cá nhân; nhân viên quản lý sách/bản sách/thành viên/mượn/trả/hàng chờ/dashboard; admin tạo tài khoản nhân viên và đặt lại mật khẩu. Xác nhận giới hạn vai trò và request ghi có CSRF.
+- Kiểm tra làm mới dữ liệu sau thao tác, thông báo thành công/xung đột/lỗi mạng, xác nhận thao tác quan trọng, render text an toàn và không còn nút giả/không hoạt động.
+- Không thêm dependency/framework frontend, nghiệp vụ mới, hay thay đổi schema/API trừ khi có lỗi UI cụ thể cần sửa tối thiểu và ghi rõ.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Ở viewport 360px và 375px, `document.documentElement.scrollWidth` không lớn hơn `clientWidth`; nếu bảng rộng hơn màn hình thì chỉ wrapper bảng cuộn. Bố cục vẫn sử dụng được trên tablet và desktop.
+- [x] Các luồng chính patron và nhân viên vẫn hoạt động: danh mục công khai, đăng nhập/hồ sơ/mượn/đặt trước/hoạt động của bạn đọc và sách/thành viên/lượt mượn/đặt trước/dashboard của nhân viên. Các test UI của lát cắt trước đã kiểm tra từng thao tác ghi; đợt polish này kiểm tra lại điều hướng vai trò và các màn hình liên quan.
+- [x] Dữ liệu riêng patron vẫn giới hạn cho đúng tài khoản; công cụ staff/admin được ẩn với patron và API từ chối vai trò không được phép.
+- [ ] Dialog và các trạng thái loading/empty/success/error/confirmation dùng được đầy đủ bằng bàn phím mà không kẹt/mất focus. Đã kiểm tra tab bằng phím mũi tên và điều khiển đóng/mở modal; chưa kiểm tra đầy đủ dialog/focus/xác nhận chỉ bằng bàn phím.
+- [x] Ghi dữ liệu tiếp tục dùng API cùng origin và CSRF; thao tác thành công làm mới danh sách/chỉ số liên quan; lỗi hiển thị dễ hiểu và không giả báo thành công.
+- [x] Nội dung không tin cậy từ catalog/hồ sơ/tài khoản/lịch sử được render như text, không tạo phần tử chèn; không còn nút giả hay thao tác không hoạt động.
+- [x] Test tự động liên quan, kiểm tra cú pháp JavaScript, cấu hình Compose và kiểm tra browser đạt; kết quả/giới hạn được ghi trong checklist song ngữ.
+- [ ] Giao diện cấp tài khoản nhân viên/đặt lại mật khẩu đã được kiểm tra trong browser bằng phiên ADMIN thật. Bộ demo cố ý không có admin nên không đăng nhập hay reset mật khẩu admin; hành vi backend/API được bao phủ bởi test tự động.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/resources/static/css/styles.css` — responsive account bar và workspace tabs; giữ vùng cuộn bảng tách biệt.
+- [x] `src/main/resources/static/js/books.js` — chỉ đăng ký handler tìm kiếm/reset/phân trang một lần, không lặp lại mỗi lần tải danh sách.
+- [x] `src/main/resources/static/index.html` và các module UI JavaScript còn lại — đã rà soát luồng liên quan; giữ nguyên markup/module vì không phát hiện lỗi cần sửa.
+- [x] Các test hiện có phù hợp trong `src/test/java/com/booknest/` — xác nhận full suite hiện tại bao phủ vai trò backend, CSRF và khôi phục tài khoản; không đổi nghiệp vụ backend nên không cần sửa test nguồn.
+- [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — cập nhật ledger từng file và trạng thái kiểm chứng/nghiệm thu thực tế.
+
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và Phase đã được xuất bản lên GitHub. Người dùng chấp nhận rõ hai giới hạn kiểm chứng đã ghi nhận: chưa có phiên ADMIN thật để kiểm tra giao diện và chưa kiểm tra đầy đủ dialog/focus/xác nhận chỉ bằng bàn phím. CSS responsive và sửa listener danh sách sách đã hoàn tất; `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip), mọi file JS tĩnh đạt `node --check`, Compose config/build đạt và readiness là UP/UP. Browser xác nhận không tràn trang ở 360/375/768/1280px cho STAFF và 360px cho PATRON; bảng loan rộng 920px chỉ cuộn trong wrapper còn trang vẫn rộng 345px tại viewport 360px. Điều hướng STAFF hiển thị 4 thành viên, 5 lượt mượn, 6 thẻ reservation và dashboard `2/3/1/3`; PATRON chỉ thấy loan/reservation/hồ sơ của mình, ẩn tab staff/admin và dashboard. STAFF gọi `/api/admin/accounts` nhận 403; anonymous nhận 401 ở endpoint đã kiểm tra. Tìm kiếm sách tạo đúng một request; lỗi 503 mô phỏng hiển thị thông báo phù hợp. Số bản ghi PostgreSQL giữ nguyên `6/4/9/4/5/6` (account/book/copy/member/loan/reservation). Không reset mật khẩu admin.

@@ -188,26 +188,26 @@ export function initializeBooks(
 			booksLoading.hidden = true;
 			setFeedback(booksFeedback, userMessage(error), true);
 		}
-
-		booksSearchForm.addEventListener("submit", event => {
-			event.preventDefault();
-			bookPage = 0;
-			loadBooks();
-		});
-		document.querySelector("#books-reset").addEventListener("click", () => {
-			booksSearchForm.reset();
-			bookPage = 0;
-			loadBooks();
-		});
-		document.querySelector("#books-previous").addEventListener("click", () => {
-			bookPage = Math.max(0, bookPage - 1);
-			loadBooks();
-		});
-		document.querySelector("#books-next").addEventListener("click", () => {
-			bookPage += 1;
-			loadBooks();
-		});
 	}
+
+	booksSearchForm.addEventListener("submit", event => {
+		event.preventDefault();
+		bookPage = 0;
+		loadBooks();
+	});
+	document.querySelector("#books-reset").addEventListener("click", () => {
+		booksSearchForm.reset();
+		bookPage = 0;
+		loadBooks();
+	});
+	document.querySelector("#books-previous").addEventListener("click", () => {
+		bookPage = Math.max(0, bookPage - 1);
+		loadBooks();
+	});
+	document.querySelector("#books-next").addEventListener("click", () => {
+		bookPage += 1;
+		loadBooks();
+	});
 
 	function setRole(nextRole) {
 		role = nextRole;
