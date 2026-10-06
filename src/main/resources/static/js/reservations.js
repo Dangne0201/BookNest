@@ -28,10 +28,10 @@ export function initializeReservations(
 		const status = document.createElement("p");
 		status.className = "muted";
 		status.textContent = reservation.status === "HELD"
-			? `Đã giữ bản sách #${reservation.copyId} cho bạn.`
+			? `Copy #${reservation.copyId} is being held for you.`
 			: reservation.status === "WAITING"
-				? `Đang chờ${reservation.queuePosition ? ` — vị trí ${reservation.queuePosition}` : ""}.`
-				: reservation.status === "FULFILLED" ? "Đã chuyển thành lượt mượn." : "Đã hủy.";
+				? `Waiting${reservation.queuePosition ? ` — position ${reservation.queuePosition}` : ""}.`
+				: reservation.status === "FULFILLED" ? "Converted to a loan." : "Cancelled.";
 		details.append(title, status);
 		item.append(details);
 
@@ -41,12 +41,12 @@ export function initializeReservations(
 			const checkout = document.createElement("button");
 			checkout.type = "button";
 			checkout.className = "button button-primary button-small";
-			checkout.textContent = "Nhận sách";
+			checkout.textContent = "Check out book";
 			checkout.addEventListener("click", async () => {
 				checkout.disabled = true;
 				try {
 					await apiRequest(`/api/reservations/${reservation.id}/checkout`, { method: "POST" });
-					showToast("Đã mượn sách theo lượt đặt trước.");
+					showToast("Book checked out from your reservation.");
 					await Promise.all([
 						loadReservations(),
 						onBooksChanged(),
@@ -65,9 +65,9 @@ export function initializeReservations(
 			const cancel = document.createElement("button");
 			cancel.type = "button";
 			cancel.className = "button button-quiet button-small";
-			cancel.textContent = "Hủy đặt trước";
+			cancel.textContent = "Cancel reservation";
 			cancel.addEventListener("click", async () => {
-				if (!window.confirm(`Hủy yêu cầu đặt trước “${reservation.bookTitle}”?`)) {
+				if (!window.confirm(`Cancel the reservation for "${reservation.bookTitle}"?`)) {
 					return;
 				}
 				cancel.disabled = true;
@@ -79,7 +79,7 @@ export function initializeReservations(
 						onActivityChanged(),
 						onDashboardChanged()
 					]);
-					showToast("Đã hủy yêu cầu đặt trước.");
+					showToast("Reservation cancelled.");
 				} catch (error) {
 					showToast(userMessage(error), true);
 					cancel.disabled = false;
@@ -108,8 +108,8 @@ export function initializeReservations(
 		role = nextRole;
 		document.querySelector("#my-reservations-section").hidden = role === "PUBLIC";
 		document.querySelector("#my-reservations-section .muted").textContent = role === "PATRON"
-			? "Theo dõi các yêu cầu đặt trước của bạn."
-			: "Theo dõi hàng chờ và các bản đang được giữ cho bạn đọc.";
+			? "Track your reservation requests."
+			: "Track the reservation queue and copies held for patrons.";
 	}
 
 	return { loadReservations, setRole };

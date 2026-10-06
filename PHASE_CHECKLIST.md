@@ -492,7 +492,7 @@ The earlier reservation work already implements FIFO waiting, holds on return, a
 - Patrons may renew only their own loans; staff/admin may renew loans for library operations. Derive the acting account from the authenticated session, never from client-supplied account/member/staff IDs.
 - Persist whether renewed, renewal timestamp, and renewing account so the business record retains the renewal actor.
 - Add a transactional renewal endpoint. Lock the loan and relevant book in the same order used by the existing return path; serialize renewal against reservation creation/cancellation so a newly queued reader cannot be bypassed by a concurrent renewal.
-- Add renewal state to API responses and show a **Gia hạn** action and outcome in the existing Loans/Activity UI. The server remains authoritative; hide/disable actions when renewal is clearly unavailable, while rendering safe localized errors for conflicts.
+- Add renewal state to API responses and show a **Renew** action and outcome in the existing Loans/Activity UI. The server remains authoritative; hide/disable actions when renewal is clearly unavailable, while rendering safe localized errors for conflicts.
 - Preserve checkout, return, patron ownership, queue behavior, CSRF, and session rules. No auto-renewal, email, extra renewal, renewal of overdue loans, or activity/event-sourcing subsystem.
 
 #### Policy choice required before implementation
@@ -698,7 +698,7 @@ This final phase verifies the committed application and reviewer workflow agains
 - [x] `AGENTS.md` — update the durable checkpoint with factual Phase 10 results after verification.
 - [x] Application or deployment files — no changes were needed; no runtime defect was found.
 
-**State:** Accepted by the user on 2026-10-06 and published as `3514063`. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures, errors, or skips); every static JS file passed `node --check`; `docker compose config --quiet` and `docker compose build` passed. The app image was rebuilt and app container recreated using `docker compose up --build -d`; after its normal startup interval both services were healthy, readiness was UP with DB UP, and `/` returned HTTP 200 with title `BookNest | Thư viện của bạn`. Demo STAFF and PATRON sign-ins succeeded. With explicit user approval, the patron checked out The Hobbit copy #19 (due 2026-10-20), then staff returned it; the UI showed the returned state, checkout/return actors, and both lifecycle events. The returned test loan and two activity events are intentionally retained. Counts before the transaction were accounts/books/copies/members/loans/reservations/activity = `6/4/9/4/5/6/0`; after it and after app recreation they were `6/4/9/4/6/6/2`. Loan #12 remains returned and copy #19 is `AVAILABLE`; all other tracked table counts remained unchanged. The `booknest-postgres-data` volume was present after restart. No volume/container/database was deleted or reset. One readiness probe immediately after container recreation raced startup and the connection closed; after 12 seconds the app was healthy and the readiness and static-page checks passed. No application code or deployment files changed.
+**State:** Accepted by the user on 2026-10-06 and published as `3514063`. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures, errors, or skips); every static JS file passed `node --check`; `docker compose config --quiet` and `docker compose build` passed. The app image was rebuilt and app container recreated using `docker compose up --build -d`; after its normal startup interval both services were healthy, readiness was UP with DB UP, and `/` returned HTTP 200 with title `BookNest | Your Library`. Demo STAFF and PATRON sign-ins succeeded. With explicit user approval, the patron checked out The Hobbit copy #19 (due 2026-10-20), then staff returned it; the UI showed the returned state, checkout/return actors, and both lifecycle events. The returned test loan and two activity events are intentionally retained. Counts before the transaction were accounts/books/copies/members/loans/reservations/activity = `6/4/9/4/5/6/0`; after it and after app recreation they were `6/4/9/4/6/6/2`. Loan #12 remains returned and copy #19 is `AVAILABLE`; all other tracked table counts remained unchanged. The `booknest-postgres-data` volume was present after restart. No volume/container/database was deleted or reset. One readiness probe immediately after container recreation raced startup and the connection closed; after 12 seconds the app was healthy and the readiness and static-page checks passed. No application code or deployment files changed.
 
 ### Priority follow-up — keyboard dismissal for accessible dialogs (approved)
 
@@ -765,3 +765,47 @@ This checklist tracks the remaining verification and handoff work for the curren
 - [x] Verify the README startup/shutdown/demo/admin-recovery instructions match current Compose behavior; add the reviewer walkthrough without adding production deployment, integrations, or unapproved features.
 
 **Definition of done:** all required keyboard checks are passed or explicitly documented as unverified; bilingual checklists and project checkpoint match the actual state; applicable regression checks pass; user accepts the final diff; accepted changes are published and the repository is synchronized. The demo handoff may be completed separately and does not block technical completion.
+
+### Catalog discovery UI follow-up — book cards
+
+Scope: improve the public and patron catalog's visual discovery while preserving the staff/admin inventory table and existing API/workflows. Use CSS-drawn, non-photorealistic covers based only on existing metadata; do not fetch external images, add dependencies, or change library records.
+
+#### Acceptance checks
+
+- [x] Public and PATRON catalog results render as responsive book cards; STAFF and ADMIN continue to use the existing inventory table.
+- [x] Cards show title, author, genre, publication year when present, a safe description excerpt, and available-copy count; missing optional metadata is handled without fake values.
+- [x] Cover artwork is decorative, generated locally with CSS, and does not imply a real cover or call a third-party service.
+- [x] Existing detail/copy actions remain reachable; patrons can still open copy details to borrow or reserve, and staff inventory management is unchanged.
+- [x] Card layout has no page-level horizontal overflow at 360px and remains legible at desktop widths; all user-controlled text is inserted with safe DOM APIs.
+- [x] Verify role-specific rendering, search/filter/pagination, accessible names and list semantics, JavaScript syntax, Maven tests, and `git diff --check`.
+
+#### Anticipated file ledger
+
+- [x] `src/main/resources/static/index.html` — add the semantic result-grid container while retaining the existing staff table.
+- [x] `src/main/resources/static/js/books.js` — render role-appropriate cards from the current paged API response and preserve all existing detail/actions.
+- [x] `src/main/resources/static/css/styles.css` — add responsive card and generated-cover styles consistent with the current theme.
+- [x] `PHASE_CHECKLIST.md`, `PHASE_CHECKLIST.vi.md`, and `AGENTS.md` — record implementation, per-file status, exact checks, and any remaining limitations.
+
+**State:** Implemented and verified; awaiting user acceptance before publication.
+
+**Outcome (2026-10-06):** Added local CSS cover illustrations and a responsive card catalog for PUBLIC/PATRON while preserving the STAFF/ADMIN table. A temporary static preview with mocked API responses verified public cards, patron available-copy/detail and reserve controls, staff table rendering, search (`q=query-check`), paging (`page=1`), safe text (an HTML-looking title created zero image elements), and no horizontal overflow at 360/375/768/1280px. ADMIN was not independently browser-tested; it uses the same existing `canManage()` branch as STAFF. The preview server was stopped. Then `docker compose up -d --build app` built successfully and recreated only the app; the existing PostgreSQL service and `booknest-postgres-data` volume were preserved. Compose reports app and DB healthy; `/actuator/health/readiness` returned HTTP 200 with app and DB UP; `/` returned HTTP 200. Live browser verification after redeploy showed 20 public cards with CSS covers; at 360px document width matched client width (345px available content area), with no horizontal overflow. The app restart invalidated the in-memory login session, so sign in again; no database data or credentials changed. `node --check` passed for all static JavaScript, `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests with 0 failures/errors/skips, `docker compose config --quiet` passed, and `git diff --check` passed. No commit or push has been made; awaiting user acceptance.
+
+### Product-wide English localization
+
+Scope: make application UI, project documentation, and existing catalog text English, including dynamic status, validation, confirmation, accessibility, and error text. Preserve business behavior, API contracts, catalog IDs and relationships, and all non-catalog records. Retire the duplicate Vietnamese checklist and maintain this English checklist as the single project record.
+
+#### Acceptance checks
+
+- [x] Every static and dynamic user-visible application string, page title, accessible label, browser confirmation, and error message is English.
+- [x] README setup/reviewer walkthrough labels match the English UI; no Vietnamese UI labels remain in examples.
+- [x] Existing roles, flows, API contracts, safe text rendering, and responsive layout continue to work; catalog text is English while account, member, loan, reservation, and copy records remain unchanged.
+- [x] Check all static JavaScript syntax, Maven tests, Compose config, and `git diff --check`; smoke-test public catalog and signed-in UI in a browser.
+
+#### Anticipated files
+
+- [x] `src/main/resources/static/index.html` and all localized strings in `src/main/resources/static/js/*.js`.
+- [x] `README.md`, `AGENTS.md`, `PHASE_CHECKLIST.md`, and removal of the redundant Vietnamese checklist.
+
+**State:** English application UI, project documentation, and catalog text are implemented, verified, and deployed.
+
+**Outcome (2026-10-06):** `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests with 0 failures/errors/skips; all static JavaScript files passed `node --check`; `docker compose config --quiet` and `git diff --check` passed. Rebuilt and recreated only the app with `docker compose up -d --build app`; the app and database became healthy, readiness returned UP with DB UP, and `/` returned HTTP 200. The named `booknest-postgres-data` volume remained present. At the user's direction, translated title, author, genre, and description for 51 existing catalog records; three already-English book records were retained. Catalog IDs, ISBNs, publication years, copies, and all non-catalog account/member/loan/reservation/activity data were preserved. Database verification found 54 books, 159 copies, 7 accounts, 4 members, 6 loans, 6 reservations, and 2 activity records; a catalog-field scan found no Vietnamese diacritics. Browser verification at 360px showed 20 public catalog cards, English interface labels and titles, no visible Vietnamese text, and no page overflow (345px client width equaled scroll width). A local demo STAFF sign-in exposed English workspace tabs; signing out left `/api/auth/me` returning 401.

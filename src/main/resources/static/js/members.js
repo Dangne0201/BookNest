@@ -43,7 +43,7 @@ export function initializeMembers(showToast) {
 		const contactCell = document.createElement("td");
 		const contactDetails = [member.email, member.phone].filter(Boolean);
 		if (contactDetails.length === 0) {
-			contactCell.textContent = "Chưa có thông tin";
+			contactCell.textContent = "No contact information";
 			contactCell.className = "muted";
 		} else {
 			contactDetails.forEach(value => {
@@ -68,10 +68,10 @@ export function initializeMembers(showToast) {
 		const actionsCell = document.createElement("td");
 		const actions = document.createElement("div");
 		actions.className = "row-actions";
-		const editButton = makeActionButton("Sửa", "edit", member.id, "button button-quiet button-small");
-		editButton.setAttribute("aria-label", `Sửa thành viên ${member.fullName}`);
-		const deleteButton = makeActionButton("Xóa", "delete", member.id, "button button-danger button-small");
-		deleteButton.setAttribute("aria-label", `Xóa thành viên ${member.fullName}`);
+		const editButton = makeActionButton("Edit", "edit", member.id, "button button-quiet button-small");
+		editButton.setAttribute("aria-label", `Edit member ${member.fullName}`);
+		const deleteButton = makeActionButton("Delete", "delete", member.id, "button button-danger button-small");
+		deleteButton.setAttribute("aria-label", `Delete member ${member.fullName}`);
 		actions.append(editButton, deleteButton);
 		actionsCell.append(actions);
 		row.append(nameCell, contactCell, notesCell, actionsCell);
@@ -108,7 +108,7 @@ export function initializeMembers(showToast) {
 		memberForm.elements.email.value = member?.email || "";
 		memberForm.elements.phone.value = member?.phone || "";
 		memberForm.elements.notes.value = member?.notes || "";
-		memberDialogTitle.textContent = member ? "Chỉnh sửa thành viên" : "Thêm thành viên";
+		memberDialogTitle.textContent = member ? "Edit member" : "Add a member";
 		memberDialog.showModal();
 		memberForm.elements.fullName.focus();
 	}
@@ -133,7 +133,7 @@ export function initializeMembers(showToast) {
 			return;
 		}
 		if (button.dataset.action !== "delete"
-				|| !window.confirm(`Xóa hồ sơ thành viên "${member.fullName}"? Thao tác này không thể hoàn tác.`)) {
+				|| !window.confirm(`Delete the member profile for "${member.fullName}"? This cannot be undone.`)) {
 			return;
 		}
 
@@ -141,7 +141,7 @@ export function initializeMembers(showToast) {
 		try {
 			await apiRequest(`/api/members/${member.id}`, { method: "DELETE" });
 			await loadMembers();
-			showToast("Đã xóa thành viên.");
+			showToast("Member deleted.");
 		} catch (error) {
 			showToast(userMessage(error), true);
 		} finally {
@@ -184,7 +184,7 @@ export function initializeMembers(showToast) {
 			});
 			memberDialog.close();
 			await loadMembers();
-			showToast(id ? "Đã cập nhật thành viên." : "Đã thêm thành viên.");
+			showToast(id ? "Member updated." : "Member added.");
 		} catch (error) {
 			memberFormError.textContent = userMessage(error);
 			memberFormError.hidden = false;

@@ -1,9 +1,9 @@
 import { apiRequest, userMessage } from "./api.js";
 
 const ROLE_LABELS = {
-	ADMIN: "Quản trị viên",
-	STAFF: "Nhân viên",
-	PATRON: "Bạn đọc"
+	ADMIN: "Administrator",
+	STAFF: "Staff",
+	PATRON: "Patron"
 };
 
 export function initializeAdmin(showToast) {
@@ -28,7 +28,7 @@ export function initializeAdmin(showToast) {
 	}
 
 	function showTemporaryPassword(account) {
-		credentialUsername.textContent = `Tài khoản: ${account.username}`;
+		credentialUsername.textContent = `Account: ${account.username}`;
 		credentialValue.textContent = account.temporaryPassword;
 		credentialDialog.showModal();
 	}
@@ -47,10 +47,10 @@ export function initializeAdmin(showToast) {
 			const resetButton = document.createElement("button");
 			resetButton.type = "button";
 			resetButton.className = "button button-secondary button-small";
-			resetButton.textContent = account.passwordChangeRequired ? "Cấp lại mật khẩu tạm" : "Đặt lại mật khẩu";
-			resetButton.setAttribute("aria-label", `Đặt lại mật khẩu cho ${account.username}`);
+			resetButton.textContent = account.passwordChangeRequired ? "Reissue temporary password" : "Reset password";
+			resetButton.setAttribute("aria-label", `Reset password for ${account.username}`);
 			resetButton.addEventListener("click", async () => {
-				if (!window.confirm(`Hãy chắc chắn bạn đã xác minh danh tính của ${account.username}. Tiếp tục cấp mật khẩu tạm?`)) {
+				if (!window.confirm(`Confirm that you have verified ${account.username}'s identity. Issue a temporary password?`)) {
 					return;
 				}
 				resetButton.disabled = true;
@@ -69,7 +69,7 @@ export function initializeAdmin(showToast) {
 			});
 			actionsCell.append(resetButton);
 		} else {
-			actionsCell.textContent = "Khôi phục trên máy chủ";
+			actionsCell.textContent = "Recover on server";
 			actionsCell.className = "muted";
 		}
 		row.append(usernameCell, roleCell, nameCell, actionsCell);

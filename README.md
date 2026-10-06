@@ -62,17 +62,17 @@ The first administrator is created through a local operational command, not thro
 docker compose run --rm app --spring.main.web-application-type=none --booknest.admin-recovery=true
 ```
 
-The command prints a randomly generated temporary password once. Sign in as `admin` and immediately choose **Hoàn tất đổi mật khẩu**. Keep the temporary password private and do not save it in the repository. Running the command again rotates the administrator password and invalidates sessions created with the previous credential.
+The command prints a randomly generated temporary password once. Sign in as `admin` and immediately choose **Change temporary password**. Keep the temporary password private and do not save it in the repository. Running the command again rotates the administrator password and invalidates sessions created with the previous credential.
 
-There is no email-based recovery. A patron or staff member must contact the library; an administrator verifies the request and issues a temporary password from **Tài khoản**. Staff cannot reset passwords. Admin recovery must be run by someone with access to the host/server.
+There is no email-based recovery. A patron or staff member must contact the library; an administrator verifies the request and issues a temporary password from **Accounts**. Staff cannot reset passwords. Admin recovery must be run by someone with access to the host/server.
 
 ### Use the application
 
-1. Register from **Tạo tài khoản** as a patron, providing a name and password. A linked borrowing profile is created automatically.
+1. Register from **Create account** as a patron, providing a name and password. A linked borrowing profile is created automatically.
 2. Sign in and browse the public catalog. If a copy is available, borrow it immediately; otherwise join the book's reservation queue. An eligible active loan may be renewed once for 14 calendar days from its current due date; overdue, already-renewed, or reservation-queued titles cannot be renewed.
-3. Use **Hồ sơ của tôi** to update your own contact information. **Hoạt động của tôi** shows only your loans and reservations.
+3. Use **My profile** to update your own contact information. **My activity** shows only your loans and reservations.
 4. Staff accounts are provisioned by the administrator. Staff maintain books/copies and member records, and confirm physical returns.
-5. Admins use **Tài khoản** to provision staff accounts or reset a verified patron/staff account. Temporary passwords are shown once and require a change at the next sign-in.
+5. Admins use **Accounts** to provision staff accounts or reset a verified patron/staff account. Temporary passwords are shown once and require a change at the next sign-in.
 
 Demo data is disabled by default. See [Local demo data](#local-demo-data) for opt-in seeding instructions and local-only credentials.
 
@@ -115,7 +115,7 @@ These published sample credentials are intentionally convenient for local explor
 ### Suggested reviewer walkthrough
 
 1. Open the public catalog without signing in; inspect title details and copy availability.
-2. Sign in as `demo-patron` and open **Hoạt động của tôi** to review that patron's loans, held/waiting reservations, and activity. Avoid **Nhận sách** and cancellation actions if you want to preserve the seeded state.
+2. Sign in as `demo-patron` and open **My activity** to review that patron's loans, held/waiting reservations, and activity. Avoid **Check out book** and cancellation actions if you want to preserve the seeded state.
 3. Sign out, sign in as `demo-staff`, and inspect the shared dashboard, books/copies, members, loans/returns, reservation queue, and activity. Avoid submitting forms or return/queue actions unless you intend to change the local sample data.
 4. Admin is intentionally not seeded. If reviewing account provisioning, use the local first-admin/recovery procedure above; it prints a one-time password, and running it again rotates the admin password and invalidates prior sessions.
 
@@ -295,4 +295,4 @@ Automated tests cover registration, roles and authorization, profile ownership, 
 - This is a learning portfolio, not a production-ready library platform. There is no email delivery/account recovery, reservation expiry scheduler, multi-library tenancy, cloud deployment, high-availability setup, or comprehensive operational monitoring. Admin bootstrap/recovery requires host access and emits a temporary password once. The activity timeline starts at V9 and does not invent earlier reservation history. Demo rows remain in the volume until that local volume is deliberately reset.
 - The Compose defaults, public demo credentials, and local admin-recovery workflow are for local review only; do not expose this setup as a public service.
 
-See [PHASE_CHECKLIST.md](PHASE_CHECKLIST.md) and [PHASE_CHECKLIST.vi.md](PHASE_CHECKLIST.vi.md) for acceptance and verification status. Project/agent context is in [AGENTS.md](AGENTS.md).
+See [PHASE_CHECKLIST.md](PHASE_CHECKLIST.md) for acceptance and verification status. Project/agent context is in [AGENTS.md](AGENTS.md).

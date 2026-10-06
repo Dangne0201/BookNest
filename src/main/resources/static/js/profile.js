@@ -52,7 +52,7 @@ export function initializeProfile(showToast) {
 				})
 			});
 			dialog.close();
-			showToast("Đã cập nhật hồ sơ của bạn.");
+			showToast("Your profile has been updated.");
 		} catch (error) {
 			setError(userMessage(error));
 		} finally {

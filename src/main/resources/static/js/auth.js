@@ -70,15 +70,15 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 		passwordChangeRequired = account.passwordChangeRequired;
 		changePasswordButton.hidden = false;
 		changePasswordButton.textContent = passwordChangeRequired
-			? "Hoàn tất đổi mật khẩu"
-			: "Đổi mật khẩu";
+			? "Change temporary password"
+			: "Change password";
 		if (passwordChangeRequired) {
 			workspace.hidden = true;
 			passwordForm.reset();
 			setFormError(passwordForm, "");
 			passwordDialog.showModal();
 			passwordForm.elements.currentPassword.focus();
-			showToast("Bạn đang dùng mật khẩu tạm. Hãy đổi mật khẩu để tiếp tục.");
+			showToast("You are using a temporary password. Change it to continue.");
 			return;
 		}
 		passwordCloseButtons.forEach(button => {
@@ -121,7 +121,7 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 			await showSignedIn(account);
 			loginForm.reset();
 			if (!account.passwordChangeRequired) {
-				showToast("Đăng nhập thành công.");
+				showToast("Signed in successfully.");
 			}
 		} catch (error) {
 			setFormError(loginForm, userMessage(error));
@@ -152,7 +152,7 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 			setTab(loginTab);
 			loginForm.elements.username.value = username;
 			loginForm.elements.password.focus();
-			showToast("Đăng ký thành công. Bạn đọc có thể đăng nhập và tự mượn sách.");
+			showToast("Registration successful. You can now sign in and borrow books.");
 		} catch (error) {
 			setFormError(registerForm, userMessage(error));
 		} finally {
@@ -167,7 +167,7 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 			clearCsrfToken();
 			showSignedOut();
 			setTab(loginTab);
-			showToast("Bạn đã đăng xuất.");
+			showToast("You have signed out.");
 		} catch (error) {
 			showToast(userMessage(error), true);
 		} finally {
@@ -192,7 +192,7 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 			return;
 		}
 		if (passwordForm.elements.newPassword.value !== passwordForm.elements.confirmPassword.value) {
-			setFormError(passwordForm, "Mật khẩu xác nhận chưa khớp.");
+			setFormError(passwordForm, "The passwords do not match.");
 			passwordForm.elements.confirmPassword.focus();
 			return;
 		}
@@ -212,7 +212,7 @@ export function initializeAuth({ onAuthenticated, onLoggedOut, onPublicView, sho
 			clearCsrfToken();
 			showSignedOut();
 			setTab(loginTab);
-			showToast("Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.");
+			showToast("Password changed. Please sign in again with your new password.");
 		} catch (error) {
 			setFormError(passwordForm, userMessage(error));
 		} finally {

@@ -1,57 +1,57 @@
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 const ERROR_MESSAGES = {
-	invalid_credentials: "Tên đăng nhập hoặc mật khẩu chưa chính xác.",
-	invalid_current_password: "Mật khẩu hiện tại chưa chính xác.",
-	password_unchanged: "Mật khẩu mới phải khác mật khẩu hiện tại.",
-	unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-	session_expired: "Phiên đăng nhập đã bị thu hồi. Vui lòng đăng nhập lại.",
-	password_change_required: "Hãy đổi mật khẩu tạm trước khi tiếp tục.",
-	forbidden: "Yêu cầu bảo mật không hợp lệ. Hãy tải lại trang rồi thử lại.",
-	validation_failed: "Vui lòng kiểm tra lại các trường thông tin.",
-	invalid_request: "Dữ liệu gửi lên chưa hợp lệ.",
-	invalid_query_parameter: "Tham số tìm kiếm hoặc phân trang chưa hợp lệ.",
-	invalid_page: "Số trang không hợp lệ.",
-	invalid_page_size: "Số mục mỗi trang phải từ 1 đến 100.",
-	invalid_sort_field: "Trường sắp xếp không được hỗ trợ.",
-	invalid_sort_direction: "Thứ tự sắp xếp chỉ nhận tăng dần hoặc giảm dần.",
-	invalid_availability_filter: "Bộ lọc tình trạng sách không hợp lệ.",
-	invalid_loan_state: "Bộ lọc trạng thái mượn không hợp lệ.",
-	invalid_activity_type: "Bộ lọc hoạt động không hợp lệ.",
-	username_taken: "Tên đăng nhập này đã được sử dụng.",
-	isbn_taken: "ISBN này đã có trong thư viện.",
-	invalid_isbn_format: "ISBN cần có 10 hoặc 13 chữ số (có thể nhập dấu gạch).",
-	invalid_publication_year: "Năm xuất bản chưa hợp lệ.",
-	book_not_found: "Không tìm thấy đầu sách này.",
-	book_copy_not_found: "Không tìm thấy bản sách này.",
-	book_has_copies: "Hãy xóa các bản sách trước khi xóa đầu sách.",
-	book_copy_unavailable: "Bản sách hiện không sẵn sàng để mượn.",
-	book_copy_reserved: "Bản sách đang được giữ cho lượt đặt trước.",
-	book_copy_on_loan: "Bản sách đang được mượn.",
-	book_copy_has_loan_history: "Không thể xóa bản sách vì đã có lịch sử mượn.",
-	copy_status_managed_by_loans: "Trạng thái mượn được cập nhật qua thao tác mượn và trả sách.",
-	member_has_loan_history: "Không thể xóa thành viên vì đã có lịch sử mượn.",
-	loan_not_found: "Không tìm thấy lượt mượn này.",
-	loan_already_returned: "Lượt mượn này đã được trả trước đó.",
-	loan_not_active: "Chỉ lượt mượn đang hoạt động mới có thể gia hạn.",
-	loan_overdue: "Không thể gia hạn lượt mượn đã quá hạn.",
-	loan_already_renewed: "Lượt mượn này đã được gia hạn một lần.",
-	loan_has_reservation_queue: "Có bạn đọc đang chờ hoặc đã được giữ sách; không thể gia hạn lúc này.",
-	member_not_found: "Không tìm thấy thành viên này.",
-	account_not_found: "Không tìm thấy tài khoản này.",
-	admin_recovery_requires_host_access: "Tài khoản admin chỉ được khôi phục từ máy chủ.",
-	member_required: "Vui lòng chọn thành viên.",
-	member_account_linked: "Không thể xóa hồ sơ đang gắn với tài khoản đăng nhập.",
-	book_available_for_checkout: "Đang có bản sẵn sàng để mượn ngay.",
-	reservation_already_active: "Bạn đã có yêu cầu đặt trước còn hiệu lực cho đầu sách này.",
-	reservation_not_active: "Yêu cầu đặt trước này không còn hiệu lực.",
-	reservation_not_ready: "Chưa có bản sách được giữ cho yêu cầu này.",
-	reservation_copy_unavailable: "Bản được giữ không còn sẵn sàng.",
-	patron_profile_missing: "Tài khoản bạn đọc chưa có hồ sơ mượn. Hãy liên hệ thư viện.",
-	reservation_not_found: "Không tìm thấy yêu cầu đặt trước này.",
-	reservation_book_missing: "Đầu sách của yêu cầu đặt trước không còn tồn tại.",
-	reservation_copy_missing: "Bản sách của yêu cầu đặt trước không còn tồn tại.",
-	data_conflict: "Dữ liệu đang xung đột với thông tin đã có."
+	invalid_credentials: "The username or password is incorrect.",
+	invalid_current_password: "The current password is incorrect.",
+	password_unchanged: "The new password must differ from the current password.",
+	unauthorized: "Your session has expired. Please sign in again.",
+	session_expired: "Your session has been revoked. Please sign in again.",
+	password_change_required: "Change your temporary password before continuing.",
+	forbidden: "The security request is invalid. Reload the page and try again.",
+	validation_failed: "Please review the information you entered.",
+	invalid_request: "The submitted data is invalid.",
+	invalid_query_parameter: "The search or pagination parameters are invalid.",
+	invalid_page: "The page number is invalid.",
+	invalid_page_size: "Page size must be between 1 and 100.",
+	invalid_sort_field: "This sort field is not supported.",
+	invalid_sort_direction: "Sort direction must be ascending or descending.",
+	invalid_availability_filter: "The book availability filter is invalid.",
+	invalid_loan_state: "The loan status filter is invalid.",
+	invalid_activity_type: "The activity type filter is invalid.",
+	username_taken: "This username is already in use.",
+	isbn_taken: "This ISBN is already in the library.",
+	invalid_isbn_format: "ISBN must contain 10 or 13 digits; hyphens are optional.",
+	invalid_publication_year: "The publication year is invalid.",
+	book_not_found: "This book could not be found.",
+	book_copy_not_found: "This copy could not be found.",
+	book_has_copies: "Remove the book's copies before deleting the title.",
+	book_copy_unavailable: "This copy is not currently available for checkout.",
+	book_copy_reserved: "This copy is being held for a reservation.",
+	book_copy_on_loan: "This copy is currently on loan.",
+	book_copy_has_loan_history: "This copy cannot be deleted because it has loan history.",
+	copy_status_managed_by_loans: "Copy availability changes through checkout and return actions.",
+	member_has_loan_history: "This member cannot be deleted because they have loan history.",
+	loan_not_found: "This loan could not be found.",
+	loan_already_returned: "This loan has already been returned.",
+	loan_not_active: "Only active loans can be renewed.",
+	loan_overdue: "Overdue loans cannot be renewed.",
+	loan_already_renewed: "This loan has already been renewed.",
+	loan_has_reservation_queue: "A patron is waiting for or holding this title, so it cannot be renewed.",
+	member_not_found: "This member could not be found.",
+	account_not_found: "This account could not be found.",
+	admin_recovery_requires_host_access: "Administrator accounts can only be recovered from the server.",
+	member_required: "Please select a member.",
+	member_account_linked: "A profile linked to a sign-in account cannot be deleted.",
+	book_available_for_checkout: "A copy is available to borrow now.",
+	reservation_already_active: "You already have an active reservation for this title.",
+	reservation_not_active: "This reservation is no longer active.",
+	reservation_not_ready: "No copy is currently being held for this reservation.",
+	reservation_copy_unavailable: "The held copy is no longer available.",
+	patron_profile_missing: "Your account has no borrowing profile. Please contact the library.",
+	reservation_not_found: "This reservation could not be found.",
+	reservation_book_missing: "The title for this reservation no longer exists.",
+	reservation_copy_missing: "The copy for this reservation no longer exists.",
+	data_conflict: "This change conflicts with existing data."
 };
 
 let csrfState = null;
@@ -68,9 +68,9 @@ export class ApiError extends Error {
 
 export function userMessage(error) {
 	if (error instanceof ApiError) {
-		return ERROR_MESSAGES[error.code] || error.message || "Không thể hoàn tất yêu cầu.";
+		return ERROR_MESSAGES[error.code] || error.message || "The request could not be completed.";
 	}
-	return "Không kết nối được với máy chủ. Hãy kiểm tra ứng dụng và thử lại.";
+	return "Could not connect to the server. Check the application and try again.";
 }
 
 export function clearCsrfToken() {
@@ -88,7 +88,7 @@ async function getCsrfToken() {
 			cache: "no-store"
 		}).then(async response => {
 			if (!response.ok) {
-				throw new ApiError(response.status, "csrf_unavailable", "Không lấy được thông tin bảo mật.");
+				throw new ApiError(response.status, "csrf_unavailable", "Could not retrieve security information.");
 			}
 			csrfState = await response.json();
 			return csrfState;
@@ -138,7 +138,7 @@ export async function apiRequest(path, options = {}) {
 		throw new ApiError(
 			response.status,
 			code,
-			ERROR_MESSAGES[code] || payload.message || "Không thể hoàn tất yêu cầu."
+			ERROR_MESSAGES[code] || payload.message || "The request could not be completed."
 		);
 	}
 	return payload;

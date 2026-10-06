@@ -1,256 +1,257 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="theme-color" content="#f5f4ef">
-	<title>BookNest | Thư viện của bạn</title>
+	<title>BookNest | Your Library</title>
 	<link rel="stylesheet" href="/css/styles.css">
 	<script type="module" src="/js/app.js"></script>
 </head>
 <body>
 	<header class="topbar">
-		<a class="brand" href="/" aria-label="BookNest - trang chủ">
+		<a class="brand" href="/" aria-label="BookNest home">
 			<span class="brand-mark" aria-hidden="true">B</span>
 			<span>BookNest</span>
 		</a>
 		<div id="account-bar" class="account-bar" hidden>
-			<span class="account-caption">Đang đăng nhập</span>
+			<span class="account-caption">Signed in as</span>
 			<strong id="current-username"></strong>
-			<button id="profile-button" class="button button-quiet" type="button" hidden>Hồ sơ của tôi</button>
-			<button id="change-password-button" class="button button-quiet" type="button">Đổi mật khẩu</button>
-			<button id="logout-button" class="button button-quiet" type="button">Đăng xuất</button>
+			<button id="profile-button" class="button button-quiet" type="button" hidden>My profile</button>
+			<button id="change-password-button" class="button button-quiet" type="button">Change password</button>
+			<button id="logout-button" class="button button-quiet" type="button">Sign out</button>
 		</div>
 	</header>
 
 	<main class="page-shell">
-		<section id="auth-view" class="auth-layout" aria-label="Xác thực tài khoản BookNest" hidden>
+		<section id="auth-view" class="auth-layout" aria-label="BookNest account access" hidden>
 			<div class="auth-intro">
-				<p class="eyebrow">KHÔNG GIAN ĐỌC CHUNG</p>
-				<h1>Chăm chút cho<br>từng cuốn sách.</h1>
-				<p>Khám phá sách trong thư viện chung, đăng ký làm bạn đọc và theo dõi những cuốn bạn đang mượn.</p>
+				<p class="eyebrow">A SHARED READING SPACE</p>
+				<h1>Care for<br>every book.</h1>
+				<p>Explore the shared library, register as a patron, and keep track of the books you borrow.</p>
 				<div class="auth-note">
 					<span class="note-icon" aria-hidden="true">✦</span>
-					<span>Danh mục sách công khai cho mọi người xem.</span>
+					<span>Browse the public book catalog.</span>
 				</div>
 			</div>
 			<div class="auth-card">
-				<div class="auth-tabs" role="tablist" aria-label="Chọn cách sử dụng">
+				<div class="auth-tabs" role="tablist" aria-label="Choose how to continue">
 					<button id="login-tab" class="auth-tab is-active" type="button" role="tab"
-							aria-selected="true" aria-controls="login-panel">Đăng nhập</button>
+							aria-selected="true" aria-controls="login-panel">Sign in</button>
 					<button id="register-tab" class="auth-tab" type="button" role="tab"
-							aria-selected="false" aria-controls="register-panel">Tạo tài khoản</button>
+							aria-selected="false" aria-controls="register-panel">Create account</button>
 				</div>
 				<section id="login-panel" role="tabpanel" aria-labelledby="login-tab">
-					<h2 id="auth-heading">Chào mừng trở lại</h2>
-					<p class="muted">Đăng nhập để mượn sách hoặc quản lý thư viện.</p>
+					<h2 id="auth-heading">Welcome back</h2>
+					<p class="muted">Sign in to borrow books or manage the library.</p>
 					<form id="login-form" class="form-stack">
-						<label for="login-username">Tên đăng nhập</label>
+						<label for="login-username">Username</label>
 						<input id="login-username" name="username" autocomplete="username" required maxlength="50">
-						<label for="login-password">Mật khẩu</label>
+						<label for="login-password">Password</label>
 						<input id="login-password" name="password" type="password"
 							   autocomplete="current-password" required>
 						<div class="form-error" role="alert" hidden></div>
-						<button class="button button-primary button-wide" type="submit">Đăng nhập</button>
-						<button id="forgot-password-button" class="text-button" type="button">Quên mật khẩu?</button>
+						<button class="button button-primary button-wide" type="submit">Sign in</button>
+						<button id="forgot-password-button" class="text-button" type="button">Forgot password?</button>
 						<p id="forgot-password-help" class="form-hint" hidden>
-							BookNest không gửi email khôi phục. Hãy liên hệ nhân viên thư viện để được xác minh
-							và nhờ admin cấp mật khẩu tạm. Admin khôi phục tài khoản qua thao tác trên máy chủ.
+							BookNest does not send recovery emails. Contact library staff to verify your identity
+							and request a temporary password from an administrator. Administrator recovery must be run on the server.
 						</p>
 					</form>
 				</section>
 				<section id="register-panel" role="tabpanel" aria-labelledby="register-tab" hidden>
-					<h2>Đăng ký bạn đọc</h2>
-					<p class="muted">Tạo tài khoản để tự mượn sách. Hồ sơ thành viên được tạo tự động.</p>
+					<h2>Register as a patron</h2>
+					<p class="muted">Create an account to borrow books. Your member profile will be created automatically.</p>
 					<form id="register-form" class="form-stack">
-						<label for="register-full-name">Họ và tên <span class="required-mark">*</span></label>
+						<label for="register-full-name">Full name <span class="required-mark">*</span></label>
 						<input id="register-full-name" name="fullName" autocomplete="name" required maxlength="150">
-						<label for="register-username">Tên đăng nhập</label>
+						<label for="register-username">Username</label>
 						<input id="register-username" name="username" autocomplete="username"
 							   required minlength="3" maxlength="50">
-						<label for="register-email">Email <span class="muted">(không bắt buộc)</span></label>
+						<label for="register-email">Email <span class="muted">(optional)</span></label>
 						<input id="register-email" name="email" type="email" autocomplete="email" maxlength="254">
-						<label for="register-phone">Số điện thoại <span class="muted">(không bắt buộc)</span></label>
+						<label for="register-phone">Phone <span class="muted">(optional)</span></label>
 						<input id="register-phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
-						<label for="register-password">Mật khẩu</label>
+						<label for="register-password">Password</label>
 						<input id="register-password" name="password" type="password"
 							   autocomplete="new-password" required minlength="8" maxlength="72">
-						<p class="field-hint">Từ 8 đến 72 ký tự.</p>
+						<p class="field-hint">Use 8 to 72 characters.</p>
 						<div class="form-error" role="alert" hidden></div>
-						<button class="button button-primary button-wide" type="submit">Tạo tài khoản</button>
+						<button class="button button-primary button-wide" type="submit">Create account</button>
 					</form>
 				</section>
 			</div>
 		</section>
 
 		<section id="workspace-view" hidden>
-			<nav class="workspace-tabs" role="tablist" aria-label="Khu vực thư viện">
+			<nav class="workspace-tabs" role="tablist" aria-label="Library workspace">
 				<button id="books-tab" class="workspace-tab is-active" type="button" role="tab"
-						aria-selected="true" aria-controls="books-panel">Kho sách</button>
+						aria-selected="true" aria-controls="books-panel">Catalog</button>
 				<button id="members-tab" class="workspace-tab" type="button" role="tab"
-						aria-selected="false" aria-controls="members-panel">Thành viên</button>
+						aria-selected="false" aria-controls="members-panel">Members</button>
 				<button id="loans-tab" class="workspace-tab" type="button" role="tab"
-						aria-selected="false" aria-controls="loans-panel">Mượn / Trả</button>
+						aria-selected="false" aria-controls="loans-panel">Loans</button>
 				<button id="admin-tab" class="workspace-tab" type="button" role="tab"
-						aria-selected="false" aria-controls="admin-panel" hidden>Tài khoản</button>
+						aria-selected="false" aria-controls="admin-panel" hidden>Accounts</button>
 			</nav>
 			<section id="books-panel" role="tabpanel" aria-labelledby="books-tab">
 			<section id="dashboard-section" class="dashboard-section" aria-labelledby="dashboard-heading" hidden>
 				<div class="section-heading">
 					<div>
-						<p class="eyebrow">TỔNG QUAN VẬN HÀNH</p>
-						<h2 id="dashboard-heading">Thư viện hôm nay</h2>
-						<p class="muted">Số liệu dùng chung cho toàn bộ thư viện.</p>
+						<p class="eyebrow">LIBRARY OVERVIEW</p>
+						<h2 id="dashboard-heading">Library at a glance</h2>
+						<p class="muted">Shared statistics for the entire library.</p>
 					</div>
 				</div>
 				<div id="dashboard-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 				<div id="dashboard-loading" class="loading-state" role="status" hidden>
-					<span class="spinner" aria-hidden="true"></span> Đang cập nhật tổng quan…
+					<span class="spinner" aria-hidden="true"></span> Updating overview…
 				</div>
 				<div id="dashboard-cards" class="summary-grid dashboard-grid">
 					<article class="summary-card">
 						<span class="summary-icon icon-green" aria-hidden="true">✓</span>
-						<div><p>Bản sách sẵn sàng</p><strong id="dashboard-available">—</strong></div>
+						<div><p>Available copies</p><strong id="dashboard-available">—</strong></div>
 					</article>
 					<article class="summary-card">
 						<span class="summary-icon icon-blue" aria-hidden="true">↗</span>
-						<div><p>Đang được mượn</p><strong id="dashboard-active-loans">—</strong></div>
+						<div><p>Active loans</p><strong id="dashboard-active-loans">—</strong></div>
 					</article>
 					<article class="summary-card">
 						<span class="summary-icon icon-violet" aria-hidden="true">◷</span>
-						<div><p>Lượt mượn quá hạn</p><strong id="dashboard-overdue-loans">—</strong></div>
+						<div><p>Overdue loans</p><strong id="dashboard-overdue-loans">—</strong></div>
 					</article>
 					<article class="summary-card">
 						<span class="summary-icon icon-blue" aria-hidden="true">↔</span>
-						<div><p>Đặt trước đang chờ / được giữ</p><strong id="dashboard-reservations">—</strong></div>
+						<div><p>Waiting or held reservations</p><strong id="dashboard-reservations">—</strong></div>
 					</article>
 				</div>
 			</section>
 			<div class="page-heading">
 				<div>
-					<p class="eyebrow">THƯ VIỆN DÙNG CHUNG</p>
-					<h1>Kho sách</h1>
-					<p class="muted">Theo dõi đầu sách và từng bản sách trong thư viện.</p>
+					<p class="eyebrow">SHARED LIBRARY</p>
+					<h1>Book catalog</h1>
+					<p class="muted">Browse titles and individual copies in the shared library.</p>
 				</div>
 				<button id="add-book-button" class="button button-primary" type="button">
-					<span aria-hidden="true">＋</span> Thêm đầu sách
+					<span aria-hidden="true">＋</span> Add a book
 				</button>
 			</div>
 
-			<div class="summary-grid" aria-label="Tổng quan kho sách">
+			<div class="summary-grid" aria-label="Catalog summary">
 				<article class="summary-card">
 					<span class="summary-icon icon-violet" aria-hidden="true">▤</span>
-					<div><p>Đầu sách phù hợp</p><strong id="book-total">—</strong></div>
+					<div><p>Matching titles</p><strong id="book-total">—</strong></div>
 				</article>
 				<article class="summary-card">
 					<span class="summary-icon icon-blue" aria-hidden="true">▣</span>
-					<div><p>Bản sách ở trang</p><strong id="copy-total">—</strong></div>
+					<div><p>Copies on this page</p><strong id="copy-total">—</strong></div>
 				</article>
 				<article class="summary-card">
 					<span class="summary-icon icon-green" aria-hidden="true">✓</span>
-					<div><p>Sẵn sàng ở trang</p><strong id="copy-available">—</strong></div>
+					<div><p>Available on this page</p><strong id="copy-available">—</strong></div>
 				</article>
 			</div>
 
 			<div class="section-heading">
 				<div>
-					<h2>Danh mục sách</h2>
-					<p class="muted">Thông tin và tình trạng bản sách được chia sẻ giữa các nhân viên.</p>
+					<h2>Book catalog</h2>
+					<p class="muted">Book and copy information is shared across staff accounts.</p>
 				</div>
 			</div>
-			<form id="books-search-form" class="list-controls" role="search" aria-label="Tìm và lọc sách">
-				<label>Tìm sách
-					<input id="books-query" type="search" maxlength="100" placeholder="Tên sách, tác giả hoặc ISBN">
+			<form id="books-search-form" class="list-controls" role="search" aria-label="Search and filter books">
+				<label>Search books
+					<input id="books-query" type="search" maxlength="100" placeholder="Title, author, or ISBN">
 				</label>
-				<label>Thể loại
-					<input id="books-genre" type="text" maxlength="100" placeholder="Mọi thể loại">
+				<label>Genre
+					<input id="books-genre" type="text" maxlength="100" placeholder="Any genre">
 				</label>
-				<label>Tình trạng
+				<label>Availability
 					<select id="books-availability">
-						<option value="">Tất cả</option>
-						<option value="AVAILABLE">Còn bản sẵn sàng</option>
-						<option value="UNAVAILABLE">Chưa có bản sẵn sàng</option>
+						<option value="">All</option>
+						<option value="AVAILABLE">Available copies</option>
+						<option value="UNAVAILABLE">No available copies</option>
 					</select>
 				</label>
-				<label>Sắp xếp
+				<label>Sort by
 					<select id="books-sort">
-						<option value="title">Tên sách</option>
-						<option value="author">Tác giả</option>
-						<option value="genre">Thể loại</option>
-						<option value="publicationYear">Năm xuất bản</option>
+						<option value="title">Title</option>
+						<option value="author">Author</option>
+						<option value="genre">Genre</option>
+						<option value="publicationYear">Publication year</option>
 					</select>
 				</label>
-				<label>Thứ tự
+				<label>Order
 					<select id="books-direction">
-						<option value="asc">Tăng dần</option>
-						<option value="desc">Giảm dần</option>
+						<option value="asc">Ascending</option>
+						<option value="desc">Descending</option>
 					</select>
 				</label>
 				<div class="list-control-actions">
-					<button class="button button-primary" type="submit">Áp dụng</button>
-					<button id="books-reset" class="button button-quiet" type="button">Xóa lọc</button>
+					<button class="button button-primary" type="submit">Apply</button>
+					<button id="books-reset" class="button button-quiet" type="button">Reset</button>
 				</div>
 			</form>
 			<div id="books-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 			<div id="books-loading" class="loading-state" role="status" hidden>
-				<span class="spinner" aria-hidden="true"></span> Đang tải danh mục…
+				<span class="spinner" aria-hidden="true"></span> Loading catalog…
 			</div>
 			<div id="books-empty" class="empty-state" hidden>
 				<span class="empty-icon" aria-hidden="true">▤</span>
-				<h3 aria-live="polite">Thư viện chưa có đầu sách</h3>
-				<p aria-live="polite">Thêm đầu sách đầu tiên để bắt đầu quản lý các bản sách.</p>
-				<button class="button button-secondary" type="button" data-action="add-book">Thêm đầu sách</button>
+				<h3 aria-live="polite">No books in the library yet</h3>
+				<p aria-live="polite">Add the first title to start managing copies.</p>
+				<button class="button button-secondary" type="button" data-action="add-book">Add a book</button>
 			</div>
 			<div id="books-table-wrap" class="table-wrap" hidden>
 				<table>
 					<thead>
 					<tr>
-						<th scope="col">Đầu sách</th>
-						<th scope="col">Thể loại</th>
-						<th scope="col">Số bản</th>
-						<th scope="col">Sẵn sàng</th>
-						<th scope="col"><span class="visually-hidden">Thao tác</span></th>
+						<th scope="col">Book</th>
+						<th scope="col">Genre</th>
+						<th scope="col">Copies</th>
+						<th scope="col">Available</th>
+						<th scope="col"><span class="visually-hidden">Actions</span></th>
 					</tr>
 					</thead>
 					<tbody id="books-list"></tbody>
 				</table>
 			</div>
-			<nav id="books-pagination" class="pagination-controls" aria-label="Phân trang danh mục sách" hidden>
-				<button id="books-previous" class="button button-quiet" type="button">Trang trước</button>
+			<div id="books-cards" class="book-grid" role="list" aria-label="Book catalog" hidden></div>
+			<nav id="books-pagination" class="pagination-controls" aria-label="Book catalog pagination" hidden>
+				<button id="books-previous" class="button button-quiet" type="button">Previous</button>
 				<span id="books-page-status" aria-live="polite"></span>
-				<button id="books-next" class="button button-quiet" type="button">Trang sau</button>
+				<button id="books-next" class="button button-quiet" type="button">Next</button>
 			</nav>
 			</section>
 
 			<section id="members-panel" role="tabpanel" aria-labelledby="members-tab" hidden>
 				<div class="page-heading">
 					<div>
-						<p class="eyebrow">HỒ SƠ NGƯỜI MƯỢN</p>
-						<h1>Thành viên</h1>
-						<p class="muted">Quản lý thông tin người mượn dùng chung trong thư viện.</p>
+						<p class="eyebrow">BORROWER RECORDS</p>
+						<h1>Members</h1>
+						<p class="muted">Manage shared library member records.</p>
 					</div>
 					<button id="add-member-button" class="button button-primary" type="button">
-						<span aria-hidden="true">＋</span> Thêm thành viên
+						<span aria-hidden="true">＋</span> Add a member
 					</button>
 				</div>
 				<div id="members-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 				<div id="members-loading" class="loading-state" role="status" hidden>
-					<span class="spinner" aria-hidden="true"></span> Đang tải thành viên…
+					<span class="spinner" aria-hidden="true"></span> Loading members…
 				</div>
 				<div id="members-empty" class="empty-state" hidden>
 					<span class="empty-icon" aria-hidden="true">♙</span>
-					<h3 aria-live="polite">Chưa có thành viên</h3>
-					<p aria-live="polite">Thêm hồ sơ người mượn đầu tiên vào thư viện.</p>
-					<button class="button button-secondary" type="button" data-action="add-member">Thêm thành viên</button>
+					<h3 aria-live="polite">No members yet</h3>
+					<p aria-live="polite">Add the first borrower profile to the library.</p>
+					<button class="button button-secondary" type="button" data-action="add-member">Add a member</button>
 				</div>
 				<div id="members-table-wrap" class="table-wrap" hidden>
 					<table class="members-table">
 						<thead>
 						<tr>
-							<th scope="col">Họ tên</th>
-							<th scope="col">Liên hệ</th>
-							<th scope="col">Ghi chú</th>
-							<th scope="col"><span class="visually-hidden">Thao tác</span></th>
+							<th scope="col">Name</th>
+							<th scope="col">Contact</th>
+							<th scope="col">Notes</th>
+							<th scope="col"><span class="visually-hidden">Actions</span></th>
 						</tr>
 						</thead>
 						<tbody id="members-list"></tbody>
@@ -260,136 +261,136 @@
 			<section id="loans-panel" role="tabpanel" aria-labelledby="loans-tab" hidden>
 				<div class="page-heading">
 					<div>
-						<p class="eyebrow">THEO DÕI MƯỢN TRẢ</p>
-						<h1>Mượn / Trả</h1>
-						<p class="muted">Theo dõi các lượt mượn và cập nhật tình trạng bản sách.</p>
+						<p class="eyebrow">CIRCULATION</p>
+						<h1>Loans</h1>
+						<p class="muted">Track loans and update copy availability.</p>
 					</div>
 					<button id="checkout-button" class="button button-primary" type="button">
-						<span aria-hidden="true">＋</span> Cho mượn sách
+						<span aria-hidden="true">＋</span> Check out a book
 					</button>
 				</div>
 				<div id="loans-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-				<form id="loans-search-form" class="list-controls" role="search" aria-label="Tìm và lọc lượt mượn">
-					<label>Tìm kiếm
-						<input id="loans-query" type="search" maxlength="100" placeholder="Tên sách hoặc thành viên">
+				<form id="loans-search-form" class="list-controls" role="search" aria-label="Search and filter loans">
+					<label>Search
+						<input id="loans-query" type="search" maxlength="100" placeholder="Book title or member">
 					</label>
-					<label>Trạng thái
+					<label>Status
 						<select id="loans-state">
-							<option value="">Tất cả</option>
-							<option value="ACTIVE">Đang mượn</option>
-							<option value="OVERDUE">Quá hạn</option>
-							<option value="RETURNED">Đã trả</option>
+							<option value="">All</option>
+							<option value="ACTIVE">Active</option>
+							<option value="OVERDUE">Overdue</option>
+							<option value="RETURNED">Returned</option>
 						</select>
 					</label>
-					<label>Sắp xếp
+					<label>Sort by
 						<select id="loans-sort">
-							<option value="checkoutDate">Ngày mượn</option>
-							<option value="dueDate">Hạn trả</option>
-							<option value="returnDate">Ngày trả</option>
-							<option value="bookTitle">Tên sách</option>
-							<option value="memberName">Tên thành viên</option>
+							<option value="checkoutDate">Checkout date</option>
+							<option value="dueDate">Due date</option>
+							<option value="returnDate">Return date</option>
+							<option value="bookTitle">Book title</option>
+							<option value="memberName">Member name</option>
 						</select>
 					</label>
-					<label>Thứ tự
+					<label>Order
 						<select id="loans-direction">
-							<option value="desc">Giảm dần</option>
-							<option value="asc">Tăng dần</option>
+							<option value="desc">Descending</option>
+							<option value="asc">Ascending</option>
 						</select>
 					</label>
 					<div class="list-control-actions">
-						<button class="button button-primary" type="submit">Áp dụng</button>
-						<button id="loans-reset" class="button button-quiet" type="button">Xóa lọc</button>
+						<button class="button button-primary" type="submit">Apply</button>
+						<button id="loans-reset" class="button button-quiet" type="button">Reset</button>
 					</div>
 				</form>
 				<div id="loans-loading" class="loading-state" role="status" hidden>
-					<span class="spinner" aria-hidden="true"></span> Đang tải lượt mượn…
+					<span class="spinner" aria-hidden="true"></span> Loading loans…
 				</div>
 				<div id="loans-empty" class="empty-state" hidden>
 					<span class="empty-icon" aria-hidden="true">↔</span>
-					<h3 aria-live="polite">Chưa có lượt mượn</h3>
-					<p aria-live="polite">Tạo thành viên, đầu sách và bản sách sẵn sàng trong các mục tương ứng, rồi bắt đầu cho mượn.</p>
-					<button class="button button-secondary" type="button" data-action="checkout">Cho mượn sách</button>
+					<h3 aria-live="polite">No loans yet</h3>
+					<p aria-live="polite">Add a member, a book, and an available copy in their respective sections, then check out a book.</p>
+					<button class="button button-secondary" type="button" data-action="checkout">Check out a book</button>
 				</div>
 				<div id="loans-table-wrap" class="table-wrap" hidden>
 					<table class="loans-table">
 						<thead>
 						<tr>
-							<th scope="col">Thành viên</th>
-							<th scope="col">Sách / Bản</th>
-							<th scope="col">Ngày mượn</th>
-							<th scope="col">Hạn trả</th>
-							<th scope="col">Trạng thái</th>
-							<th scope="col"><span class="visually-hidden">Thao tác</span></th>
+							<th scope="col">Member</th>
+							<th scope="col">Book / Copy</th>
+							<th scope="col">Checkout date</th>
+							<th scope="col">Due date</th>
+							<th scope="col">Status</th>
+							<th scope="col"><span class="visually-hidden">Actions</span></th>
 						</tr>
 						</thead>
 						<tbody id="loans-list"></tbody>
 					</table>
 				</div>
-				<nav id="loans-pagination" class="pagination-controls" aria-label="Phân trang lượt mượn" hidden>
-					<button id="loans-previous" class="button button-quiet" type="button">Trang trước</button>
+				<nav id="loans-pagination" class="pagination-controls" aria-label="Loan pagination" hidden>
+					<button id="loans-previous" class="button button-quiet" type="button">Previous</button>
 					<span id="loans-page-status" aria-live="polite"></span>
-					<button id="loans-next" class="button button-quiet" type="button">Trang sau</button>
+					<button id="loans-next" class="button button-quiet" type="button">Next</button>
 				</nav>
 				<div id="my-reservations-section">
 					<div class="section-heading">
-						<div><h2>Đặt trước / Hàng chờ</h2><p class="muted">Theo dõi các yêu cầu đặt trước của bạn.</p></div>
+						<div><h2>Reservations / Queue</h2><p class="muted">Track your reservation requests.</p></div>
 					</div>
 					<div id="reservations-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-					<div id="reservations-empty" class="empty-state compact" hidden><p aria-live="polite">Chưa có yêu cầu đặt trước.</p></div>
+					<div id="reservations-empty" class="empty-state compact" hidden><p aria-live="polite">No reservation requests yet.</p></div>
 					<div id="reservations-list" class="reservation-list"></div>
 				</div>
 				<section id="activity-section" class="activity-section" aria-labelledby="activity-heading">
 					<div class="section-heading">
-						<h2 id="activity-heading">Lịch sử hoạt động</h2>
-						<p class="muted">Ghi nhận các thao tác mượn, trả, gia hạn và đặt trước.</p>
+						<h2 id="activity-heading">Activity history</h2>
+						<p class="muted">Records of checkout, return, renewal, and reservation events.</p>
 					</div>
-					<form id="activity-search-form" class="list-controls" role="search" aria-label="Lọc lịch sử hoạt động">
-						<label>Tìm trong lịch sử
-							<input id="activity-query" type="search" maxlength="100" placeholder="Sách, thành viên hoặc tài khoản">
+					<form id="activity-search-form" class="list-controls" role="search" aria-label="Filter activity history">
+							<label>Search history
+								<input id="activity-query" type="search" maxlength="100" placeholder="Book, member, or account">
 						</label>
-						<label>Loại hoạt động
+							<label>Activity type
 							<select id="activity-type">
-								<option value="">Tất cả hoạt động</option>
-								<option value="LOAN_CHECKED_OUT">Mượn sách</option>
-								<option value="LOAN_RETURNED">Trả sách</option>
-								<option value="LOAN_RENEWED">Gia hạn</option>
-								<option value="RESERVATION_PLACED">Đặt trước</option>
-								<option value="RESERVATION_HELD">Giữ sách</option>
-								<option value="RESERVATION_CANCELLED">Hủy đặt trước</option>
-								<option value="RESERVATION_FULFILLED">Nhận sách</option>
+								<option value="">All activity</option>
+								<option value="LOAN_CHECKED_OUT">Book checked out</option>
+								<option value="LOAN_RETURNED">Book returned</option>
+								<option value="LOAN_RENEWED">Loan renewed</option>
+								<option value="RESERVATION_PLACED">Reservation placed</option>
+								<option value="RESERVATION_HELD">Copy held</option>
+								<option value="RESERVATION_CANCELLED">Reservation cancelled</option>
+								<option value="RESERVATION_FULFILLED">Reservation fulfilled</option>
 							</select>
 						</label>
 						<div class="list-control-actions">
-							<button class="button button-primary" type="submit">Áp dụng</button>
-							<button id="activity-reset" class="button button-quiet" type="button">Xóa lọc</button>
+							<button class="button button-primary" type="submit">Apply</button>
+							<button id="activity-reset" class="button button-quiet" type="button">Reset</button>
 						</div>
 					</form>
 					<div id="activity-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-					<div id="activity-loading" class="loading-state" role="status" hidden>Đang tải lịch sử…</div>
-					<div id="activity-empty" class="empty-state compact" hidden><p aria-live="polite">Chưa có hoạt động phù hợp.</p></div>
+					<div id="activity-loading" class="loading-state" role="status" hidden>Loading activity…</div>
+					<div id="activity-empty" class="empty-state compact" hidden><p aria-live="polite">No matching activity found.</p></div>
 					<ol id="activity-list" class="activity-list" aria-live="polite"></ol>
-					<nav id="activity-pagination" class="pagination-controls" aria-label="Phân trang lịch sử hoạt động" hidden>
-						<button id="activity-previous" class="button button-quiet" type="button">Trang trước</button>
+					<nav id="activity-pagination" class="pagination-controls" aria-label="Activity pagination" hidden>
+						<button id="activity-previous" class="button button-quiet" type="button">Previous</button>
 						<span id="activity-page-status" aria-live="polite"></span>
-						<button id="activity-next" class="button button-quiet" type="button">Trang sau</button>
+						<button id="activity-next" class="button button-quiet" type="button">Next</button>
 					</nav>
 				</section>
 			</section>
 			<section id="admin-panel" role="tabpanel" aria-labelledby="admin-tab" hidden>
 				<div class="page-heading">
-					<div><p class="eyebrow">QUẢN TRỊ TÀI KHOẢN</p><h1>Tài khoản</h1>
-						<p class="muted">Tạo nhân viên và cấp mật khẩu tạm sau khi xác minh người yêu cầu.</p></div>
+					<div><p class="eyebrow">ACCOUNT ADMINISTRATION</p><h1>Accounts</h1>
+						<p class="muted">Create staff accounts and issue temporary passwords after verifying the requester.</p></div>
 				</div>
 				<form id="staff-create-form" class="inline-form">
-					<label for="staff-username">Tên đăng nhập nhân viên</label>
+					<label for="staff-username">Staff username</label>
 					<input id="staff-username" name="username" required minlength="3" maxlength="50">
-					<button class="button button-primary" type="submit">Tạo tài khoản nhân viên</button>
+					<button class="button button-primary" type="submit">Create staff account</button>
 				</form>
 				<div id="admin-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-				<div id="admin-accounts-loading" class="loading-state" role="status" hidden>Đang tải tài khoản…</div>
+				<div id="admin-accounts-loading" class="loading-state" role="status" hidden>Loading accounts…</div>
 				<div class="table-wrap">
 					<table>
-						<thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Họ tên</th><th>Thao tác</th></tr></thead>
+						<thead><tr><th>Account</th><th>Role</th><th>Name</th><th>Actions</th></tr></thead>
 						<tbody id="admin-accounts-list"></tbody>
 					</table>
 				</div>
@@ -397,34 +398,34 @@
 		</section>
 	</main>
 
-	<footer class="page-footer"><span>BookNest</span><span>Gìn giữ những câu chuyện, từng cuốn một.</span></footer>
+	<footer class="page-footer"><span>BookNest</span><span>Keeping stories alive, one book at a time.</span></footer>
 
 	<div id="app-feedback" class="toast" role="status" aria-live="polite" hidden></div>
 
 	<dialog id="book-dialog" class="modal" aria-labelledby="book-dialog-title">
 		<form id="book-form" class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">THÔNG TIN THƯ MỤC</p><h2 id="book-dialog-title">Thêm đầu sách</h2></div>
-				<button class="icon-button" type="button" data-close="book-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">BOOK DETAILS</p><h2 id="book-dialog-title">Add a book</h2></div>
+				<button class="icon-button" type="button" data-close="book-dialog" aria-label="Close">×</button>
 			</div>
 			<input name="id" type="hidden">
-			<label for="book-title">Tên sách <span class="required-mark">*</span></label>
+			<label for="book-title">Title <span class="required-mark">*</span></label>
 			<input id="book-title" name="title" required maxlength="200">
-			<label for="book-author">Tác giả <span class="required-mark">*</span></label>
+			<label for="book-author">Author <span class="required-mark">*</span></label>
 			<input id="book-author" name="author" required maxlength="150">
 			<div class="form-grid">
 				<div><label for="book-isbn">ISBN</label><input id="book-isbn" name="isbn" maxlength="24"
 						placeholder="978-0-306-40615-7"></div>
-				<div><label for="book-genre">Thể loại</label><input id="book-genre" name="genre" maxlength="100"></div>
+				<div><label for="book-genre">Genre</label><input id="book-genre" name="genre" maxlength="100"></div>
 			</div>
-			<label for="book-year">Năm xuất bản</label>
+			<label for="book-year">Publication year</label>
 			<input id="book-year" name="publicationYear" type="number" min="1000" inputmode="numeric">
-			<label for="book-description">Mô tả</label>
+			<label for="book-description">Description</label>
 			<textarea id="book-description" name="description" rows="3" maxlength="2000"></textarea>
 			<div id="book-form-error" class="form-error" role="alert" hidden></div>
 			<div class="modal-actions">
-				<button class="button button-secondary" type="button" data-close="book-dialog">Hủy</button>
-				<button class="button button-primary" type="submit">Lưu đầu sách</button>
+				<button class="button button-secondary" type="button" data-close="book-dialog">Cancel</button>
+				<button class="button button-primary" type="submit">Save book</button>
 			</div>
 		</form>
 	</dialog>
@@ -432,27 +433,27 @@
 	<dialog id="copies-dialog" class="modal modal-wide" aria-labelledby="copies-dialog-title">
 		<div class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">QUẢN LÝ TỒN KHO</p><h2 id="copies-dialog-title">Các bản sách</h2></div>
-				<button class="icon-button" type="button" data-close="copies-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">INVENTORY</p><h2 id="copies-dialog-title">Book copies</h2></div>
+				<button class="icon-button" type="button" data-close="copies-dialog" aria-label="Close">×</button>
 			</div>
 			<dl id="book-details" class="book-detail-grid"></dl>
 			<p id="copies-summary" class="muted"></p>
 			<div id="copies-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 			<div id="copies-loading" class="loading-state" role="status" hidden>
-				<span class="spinner" aria-hidden="true"></span> Đang tải các bản sách…
+				<span class="spinner" aria-hidden="true"></span> Loading copies…
 			</div>
 			<div id="copies-empty" class="empty-state compact" hidden>
-				<p aria-live="polite">Đầu sách này chưa có bản sách nào.</p>
+				<p aria-live="polite">This title has no copies yet.</p>
 			</div>
-			<ul id="copies-list" class="copies-list" aria-label="Danh sách bản sách"></ul>
+			<ul id="copies-list" class="copies-list" aria-label="Book copies"></ul>
 			<form id="copy-add-form" class="add-copy-form">
-				<label for="new-copy-status">Trạng thái bản mới</label>
+				<label for="new-copy-status">New copy status</label>
 				<select id="new-copy-status" name="status">
-					<option value="AVAILABLE">Sẵn sàng</option>
-					<option value="MAINTENANCE">Đang bảo trì</option>
-					<option value="RETIRED">Ngừng sử dụng</option>
+					<option value="AVAILABLE">Available</option>
+					<option value="MAINTENANCE">Maintenance</option>
+					<option value="RETIRED">Retired</option>
 				</select>
-				<button class="button button-primary" type="submit">Thêm bản sách</button>
+				<button class="button button-primary" type="submit">Add copy</button>
 			</form>
 		</div>
 	</dialog>
@@ -460,22 +461,22 @@
 	<dialog id="member-dialog" class="modal" aria-labelledby="member-dialog-title">
 		<form id="member-form" class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">HỒ SƠ NGƯỜI MƯỢN</p><h2 id="member-dialog-title">Thêm thành viên</h2></div>
-				<button class="icon-button" type="button" data-close="member-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">BORROWER RECORD</p><h2 id="member-dialog-title">Add a member</h2></div>
+				<button class="icon-button" type="button" data-close="member-dialog" aria-label="Close">×</button>
 			</div>
 			<input name="id" type="hidden">
-			<label for="member-full-name">Họ và tên <span class="required-mark">*</span></label>
+			<label for="member-full-name">Full name <span class="required-mark">*</span></label>
 			<input id="member-full-name" name="fullName" autocomplete="name" required maxlength="150">
-			<label for="member-email">Email <span class="muted">(không bắt buộc)</span></label>
+			<label for="member-email">Email <span class="muted">(optional)</span></label>
 			<input id="member-email" name="email" type="email" autocomplete="email" maxlength="254">
-			<label for="member-phone">Số điện thoại <span class="muted">(không bắt buộc)</span></label>
+			<label for="member-phone">Phone <span class="muted">(optional)</span></label>
 			<input id="member-phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
-			<label for="member-notes">Ghi chú <span class="muted">(không bắt buộc)</span></label>
+			<label for="member-notes">Notes <span class="muted">(optional)</span></label>
 			<textarea id="member-notes" name="notes" rows="3" maxlength="1000"></textarea>
 			<div id="member-form-error" class="form-error" role="alert" hidden></div>
 			<div class="modal-actions">
-				<button class="button button-secondary" type="button" data-close="member-dialog">Hủy</button>
-				<button class="button button-primary" type="submit">Lưu thành viên</button>
+				<button class="button button-secondary" type="button" data-close="member-dialog">Cancel</button>
+				<button class="button button-primary" type="submit">Save member</button>
 			</div>
 		</form>
 	</dialog>
@@ -483,18 +484,18 @@
 	<dialog id="checkout-dialog" class="modal" aria-labelledby="checkout-dialog-title">
 		<form id="checkout-form" class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">LẬP PHIẾU MƯỢN</p><h2 id="checkout-dialog-title">Cho mượn sách</h2></div>
-				<button class="icon-button" type="button" data-close="checkout-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">CHECKOUT</p><h2 id="checkout-dialog-title">Check out a book</h2></div>
+				<button class="icon-button" type="button" data-close="checkout-dialog" aria-label="Close">×</button>
 			</div>
-			<label for="checkout-member">Thành viên <span class="required-mark">*</span></label>
+			<label for="checkout-member">Member <span class="required-mark">*</span></label>
 			<select id="checkout-member" name="memberId" required></select>
-			<label for="checkout-copy">Bản sách sẵn sàng <span class="required-mark">*</span></label>
+			<label for="checkout-copy">Available copy <span class="required-mark">*</span></label>
 			<select id="checkout-copy" name="copyId" required></select>
-			<p class="field-hint">Hạn trả được hệ thống tự tính sau 14 ngày; không thể chỉnh sửa tại đây.</p>
+			<p class="field-hint">The due date is set to 14 days from checkout and cannot be changed here.</p>
 			<div id="checkout-form-error" class="form-error" role="alert" hidden></div>
 			<div class="modal-actions">
-				<button class="button button-secondary" type="button" data-close="checkout-dialog">Hủy</button>
-				<button class="button button-primary" type="submit">Xác nhận cho mượn</button>
+				<button class="button button-secondary" type="button" data-close="checkout-dialog">Cancel</button>
+				<button class="button button-primary" type="submit">Confirm checkout</button>
 			</div>
 		</form>
 	</dialog>
@@ -502,23 +503,23 @@
 	<dialog id="password-dialog" class="modal" aria-labelledby="password-dialog-title">
 		<form id="password-form" class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">BẢO MẬT TÀI KHOẢN</p><h2 id="password-dialog-title">Đổi mật khẩu</h2></div>
-				<button class="icon-button" type="button" data-close="password-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">ACCOUNT SECURITY</p><h2 id="password-dialog-title">Change password</h2></div>
+				<button class="icon-button" type="button" data-close="password-dialog" aria-label="Close">×</button>
 			</div>
-			<label for="current-password">Mật khẩu hiện tại <span class="required-mark">*</span></label>
+			<label for="current-password">Current password <span class="required-mark">*</span></label>
 			<input id="current-password" name="currentPassword" type="password"
 				   autocomplete="current-password" required maxlength="72">
-			<label for="new-password">Mật khẩu mới <span class="required-mark">*</span></label>
+			<label for="new-password">New password <span class="required-mark">*</span></label>
 			<input id="new-password" name="newPassword" type="password"
 				   autocomplete="new-password" required minlength="8" maxlength="72">
-			<p class="field-hint">Mật khẩu mới cần từ 8 đến 72 ký tự và khác mật khẩu hiện tại.</p>
-			<label for="confirm-password">Xác nhận mật khẩu mới <span class="required-mark">*</span></label>
+			<p class="field-hint">Use 8 to 72 characters and choose a password different from the current one.</p>
+			<label for="confirm-password">Confirm new password <span class="required-mark">*</span></label>
 			<input id="confirm-password" name="confirmPassword" type="password"
 				   autocomplete="new-password" required minlength="8" maxlength="72">
 			<div id="password-form-error" class="form-error" role="alert" hidden></div>
 			<div class="modal-actions">
-				<button class="button button-secondary" type="button" data-close="password-dialog">Hủy</button>
-				<button class="button button-primary" type="submit">Đổi mật khẩu</button>
+				<button class="button button-secondary" type="button" data-close="password-dialog">Cancel</button>
+				<button class="button button-primary" type="submit">Change password</button>
 			</div>
 		</form>
 	</dialog>
@@ -526,14 +527,14 @@
 	<dialog id="temporary-password-dialog" class="modal" aria-labelledby="temporary-password-title">
 		<div class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">CHỈ HIỂN THỊ MỘT LẦN</p><h2 id="temporary-password-title">Mật khẩu tạm</h2></div>
-				<button class="icon-button" type="button" data-close="temporary-password-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">SHOWN ONCE</p><h2 id="temporary-password-title">Temporary password</h2></div>
+				<button class="icon-button" type="button" data-close="temporary-password-dialog" aria-label="Close">×</button>
 			</div>
 			<p id="temporary-password-account" class="muted"></p>
 			<code id="temporary-password-value" class="temporary-password"></code>
-			<p class="field-hint">Hãy chuyển riêng cho đúng người. Người nhận phải đổi mật khẩu ngay lần đăng nhập đầu tiên.</p>
+			<p class="field-hint">Share this privately with the verified recipient. They must change it at their first sign-in.</p>
 			<div class="modal-actions">
-				<button class="button button-primary" type="button" data-close="temporary-password-dialog">Đã lưu an toàn</button>
+				<button class="button button-primary" type="button" data-close="temporary-password-dialog">I have saved it securely</button>
 			</div>
 		</div>
 	</dialog>
@@ -541,21 +542,21 @@
 	<dialog id="profile-dialog" class="modal" aria-labelledby="profile-dialog-title">
 		<form id="profile-form" class="modal-form">
 			<div class="modal-heading">
-				<div><p class="eyebrow">HỒ SƠ BẠN ĐỌC</p><h2 id="profile-dialog-title">Thông tin của tôi</h2></div>
-				<button class="icon-button" type="button" data-close="profile-dialog" aria-label="Đóng">×</button>
+				<div><p class="eyebrow">PATRON PROFILE</p><h2 id="profile-dialog-title">My information</h2></div>
+				<button class="icon-button" type="button" data-close="profile-dialog" aria-label="Close">×</button>
 			</div>
-			<label for="profile-full-name">Họ và tên <span class="required-mark">*</span></label>
+			<label for="profile-full-name">Full name <span class="required-mark">*</span></label>
 			<input id="profile-full-name" name="fullName" autocomplete="name" required maxlength="150">
-			<label for="profile-email">Email <span class="muted">(không bắt buộc)</span></label>
+			<label for="profile-email">Email <span class="muted">(optional)</span></label>
 			<input id="profile-email" name="email" type="email" autocomplete="email" maxlength="254">
-			<label for="profile-phone">Số điện thoại <span class="muted">(không bắt buộc)</span></label>
+			<label for="profile-phone">Phone <span class="muted">(optional)</span></label>
 			<input id="profile-phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
-			<label for="profile-notes">Ghi chú <span class="muted">(không bắt buộc)</span></label>
+			<label for="profile-notes">Notes <span class="muted">(optional)</span></label>
 			<textarea id="profile-notes" name="notes" rows="3" maxlength="1000"></textarea>
 			<div id="profile-form-error" class="form-error" role="alert" hidden></div>
 			<div class="modal-actions">
-				<button class="button button-secondary" type="button" data-close="profile-dialog">Đóng</button>
-				<button class="button button-primary" type="submit">Lưu hồ sơ</button>
+				<button class="button button-secondary" type="button" data-close="profile-dialog">Close</button>
+				<button class="button button-primary" type="submit">Save profile</button>
 			</div>
 		</form>
 	</dialog>

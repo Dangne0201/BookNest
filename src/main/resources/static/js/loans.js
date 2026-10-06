@@ -59,7 +59,7 @@ export function initializeLoans(
 			return "—";
 		}
 		const [year, month, day] = value.split("-");
-		return `${day}/${month}/${year}`;
+		return `${month}/${day}/${year}`;
 	}
 
 	function makeCell(text, className = "") {
@@ -85,7 +85,7 @@ export function initializeLoans(
 		book.textContent = loan.bookTitle;
 		const copy = document.createElement("span");
 		copy.className = "book-author";
-		copy.textContent = `Bản sách #${loan.copyId}`;
+		copy.textContent = `Copy #${loan.copyId}`;
 		bookCell.append(book, copy);
 
 		const checkoutCell = makeCell(formatDate(loan.checkoutDate));
@@ -97,18 +97,18 @@ export function initializeLoans(
 		const statusCell = document.createElement("td");
 		const status = document.createElement("span");
 		status.className = `loan-status ${loan.overdue ? "overdue" : loan.active ? "active" : "returned"}`;
-		status.textContent = loan.overdue ? "Quá hạn" : loan.active ? "Đang mượn" : "Đã trả";
+		status.textContent = loan.overdue ? "Overdue" : loan.active ? "Active" : "Returned";
 		statusCell.append(status);
 		const actor = document.createElement("span");
 		actor.className = "book-author loan-actor";
 		actor.textContent = loan.active
-			? `Lập phiếu: ${loan.checkedOutBy}`
-			: `Nhận trả: ${loan.returnedBy || "—"}`;
+			? `Checked out by: ${loan.checkedOutBy}`
+			: `Returned by: ${loan.returnedBy || "—"}`;
 		statusCell.append(actor);
 		if (loan.renewed) {
 			const renewalActor = document.createElement("span");
 			renewalActor.className = "book-author loan-actor";
-			renewalActor.textContent = `Gia hạn bởi: ${loan.renewedBy || "—"}`;
+			renewalActor.textContent = `Renewed by: ${loan.renewedBy || "—"}`;
 			statusCell.append(renewalActor);
 		}
 
@@ -118,8 +118,8 @@ export function initializeLoans(
 			const returnButton = document.createElement("button");
 			returnButton.type = "button";
 			returnButton.className = "button button-secondary button-small";
-			returnButton.textContent = "Trả sách";
-			returnButton.setAttribute("aria-label", `Trả sách ${loan.bookTitle} cho ${loan.memberName}`);
+			returnButton.textContent = "Return";
+			returnButton.setAttribute("aria-label", `Return ${loan.bookTitle} for ${loan.memberName}`);
 			returnButton.addEventListener("click", () => returnLoan(loan, returnButton));
 			actionsCell.append(returnButton);
 			hasAction = true;
@@ -128,8 +128,8 @@ export function initializeLoans(
 			const renewButton = document.createElement("button");
 			renewButton.type = "button";
 			renewButton.className = "button button-secondary button-small";
-			renewButton.textContent = "Gia hạn";
-			renewButton.setAttribute("aria-label", `Gia hạn ${loan.bookTitle} cho ${loan.memberName}`);
+			renewButton.textContent = "Renew";
+			renewButton.setAttribute("aria-label", `Renew ${loan.bookTitle} for ${loan.memberName}`);
 			renewButton.addEventListener("click", () => renewLoan(loan, renewButton));
 			actionsCell.append(renewButton);
 			hasAction = true;
@@ -151,17 +151,17 @@ export function initializeLoans(
 		if (loans.length === 0) {
 			const hasFilters = loansQuery.value || loansState.value;
 			document.querySelector("#loans-empty h3").textContent = hasFilters
-				? "Không tìm thấy lượt mượn phù hợp"
-				: "Chưa có lượt mượn";
+				? "No matching loans found"
+				: "No loans yet";
 			document.querySelector("#loans-empty p").textContent = hasFilters
-				? "Thử thay đổi từ khóa hoặc bộ lọc."
+				? "Try changing your search or filters."
 				: role === "PATRON"
-					? "Các lượt mượn và hạn trả của bạn sẽ xuất hiện tại đây."
-					: "Tạo thành viên, đầu sách và bản sách sẵn sàng, rồi bắt đầu cho mượn.";
+					? "Your loans and due dates will appear here."
+					: "Add a member, a book, and an available copy, then check out a book.";
 		}
 		loansPagination.hidden = !loanPageResult || loanPageResult.totalPages <= 1;
 		if (loanPageResult) {
-			loansPageStatus.textContent = `Trang ${loanPageResult.page + 1} / ${Math.max(loanPageResult.totalPages, 1)} · ${loanPageResult.totalElements} lượt mượn`;
+			loansPageStatus.textContent = `Page ${loanPageResult.page + 1} of ${Math.max(loanPageResult.totalPages, 1)} · ${loanPageResult.totalElements} loans`;
 			document.querySelector("#loans-previous").disabled = loanPageResult.first;
 			document.querySelector("#loans-next").disabled = loanPageResult.last;
 		}
@@ -196,14 +196,14 @@ export function initializeLoans(
 
 	function activityLabel(type) {
 		return ({
-			LOAN_CHECKED_OUT: "Đã mượn sách",
-			LOAN_RETURNED: "Đã trả sách",
-			LOAN_RENEWED: "Đã gia hạn lượt mượn",
-			RESERVATION_PLACED: "Đã đặt trước",
-			RESERVATION_HELD: "Đã giữ bản sách",
-			RESERVATION_CANCELLED: "Đã hủy đặt trước",
-			RESERVATION_FULFILLED: "Đã nhận sách đặt trước"
-		})[type] || "Hoạt động thư viện";
+			LOAN_CHECKED_OUT: "Book checked out",
+			LOAN_RETURNED: "Book returned",
+			LOAN_RENEWED: "Loan renewed",
+			RESERVATION_PLACED: "Reservation placed",
+			RESERVATION_HELD: "Copy placed on hold",
+			RESERVATION_CANCELLED: "Reservation cancelled",
+			RESERVATION_FULFILLED: "Reservation checked out"
+		})[type] || "Library activity";
 	}
 
 	function renderActivity(event) {
@@ -219,16 +219,16 @@ export function initializeLoans(
 			parts.push(event.memberName);
 		}
 		if (event.copyId) {
-			parts.push(`Bản sách #${event.copyId}`);
+			parts.push(`Copy #${event.copyId}`);
 		}
 		const description = document.createElement("span");
-		description.textContent = parts.join(" · ") || "Thao tác thư viện";
+		description.textContent = parts.join(" · ") || "Library action";
 		const actor = document.createElement("span");
 		actor.className = "activity-actor";
-		actor.textContent = ` · Thực hiện bởi ${event.actorUsername}`;
+		actor.textContent = ` · By ${event.actorUsername}`;
 		const timestamp = document.createElement("time");
 		timestamp.dateTime = event.occurredAt;
-		timestamp.textContent = new Date(event.occurredAt).toLocaleString("vi-VN");
+		timestamp.textContent = new Date(event.occurredAt).toLocaleString("en-US");
 		details.append(description, actor);
 		item.append(heading, details, timestamp);
 		return item;
@@ -240,7 +240,7 @@ export function initializeLoans(
 		activityEmpty.hidden = activities.length !== 0;
 		activityPagination.hidden = !activityPageResult || activityPageResult.totalPages <= 1;
 		if (activityPageResult) {
-			activityPageStatus.textContent = `Trang ${activityPageResult.page + 1} / ${Math.max(activityPageResult.totalPages, 1)} · ${activityPageResult.totalElements} hoạt động`;
+			activityPageStatus.textContent = `Page ${activityPageResult.page + 1} of ${Math.max(activityPageResult.totalPages, 1)} · ${activityPageResult.totalElements} events`;
 			document.querySelector("#activity-previous").disabled = activityPageResult.first;
 			document.querySelector("#activity-next").disabled = activityPageResult.last;
 		}
@@ -325,8 +325,8 @@ export function initializeLoans(
 		checkoutCopy.replaceChildren();
 		checkoutMember.disabled = true;
 		checkoutCopy.disabled = true;
-		appendPlaceholder(checkoutMember, "Đang tải thành viên…");
-		appendPlaceholder(checkoutCopy, "Đang tải bản sách…");
+		appendPlaceholder(checkoutMember, "Loading members…");
+		appendPlaceholder(checkoutCopy, "Loading copies…");
 		checkoutDialog.showModal();
 
 		try {
@@ -341,13 +341,13 @@ export function initializeLoans(
 			const availableCopies = copiesByBook.flatMap(({ book, copies }) =>
 				copies.filter(copy => copy.status === "AVAILABLE").map(copy => ({
 					id: copy.id,
-					label: `${book.title} — Bản sách #${copy.id}`
+					label: `${book.title} — Copy #${copy.id}`
 				}))
 			);
 
 			checkoutMember.replaceChildren();
 			appendPlaceholder(checkoutMember,
-				members.length ? "Chọn thành viên…" : "Chưa có thành viên");
+				members.length ? "Select a member…" : "No members available");
 			members.forEach(member => {
 				const option = document.createElement("option");
 				option.value = String(member.id);
@@ -356,7 +356,7 @@ export function initializeLoans(
 			});
 			checkoutCopy.replaceChildren();
 			appendPlaceholder(checkoutCopy,
-				availableCopies.length ? "Chọn bản sách…" : "Không có bản sách sẵn sàng");
+				availableCopies.length ? "Select a copy…" : "No available copies");
 			availableCopies.forEach(copy => {
 				const option = document.createElement("option");
 				option.value = String(copy.id);
@@ -369,8 +369,8 @@ export function initializeLoans(
 			submitButton.disabled = members.length === 0 || availableCopies.length === 0;
 			if (members.length === 0 || availableCopies.length === 0) {
 				checkoutFormError.textContent = members.length === 0
-					? "Hãy thêm thành viên trước khi lập phiếu mượn."
-					: "Hiện không có bản sách nào sẵn sàng để mượn.";
+					? "Add a member before creating a loan."
+					: "There are no copies available for checkout.";
 				checkoutFormError.hidden = false;
 			}
 			checkoutMember.focus();
@@ -382,14 +382,14 @@ export function initializeLoans(
 	}
 
 	async function returnLoan(loan, button) {
-		if (!window.confirm(`Xác nhận trả “${loan.bookTitle}” của ${loan.memberName}?`)) {
+		if (!window.confirm(`Confirm return of "${loan.bookTitle}" borrowed by ${loan.memberName}?`)) {
 			return;
 		}
 		button.disabled = true;
 		try {
 			await apiRequest(`/api/loans/${loan.id}/return`, { method: "POST" });
 			await Promise.all([loadLoans(), loadActivity(), onInventoryChanged()]);
-			showToast("Đã ghi nhận trả sách.");
+			showToast("Book return recorded.");
 		} catch (error) {
 			showToast(userMessage(error), true);
 			await loadLoans();
@@ -399,14 +399,14 @@ export function initializeLoans(
 	}
 
 	async function renewLoan(loan, button) {
-		if (!window.confirm(`Gia hạn “${loan.bookTitle}” thêm 14 ngày từ hạn hiện tại?`)) {
+		if (!window.confirm(`Extend "${loan.bookTitle}" by 14 days from its current due date?`)) {
 			return;
 		}
 		button.disabled = true;
 		try {
 			const renewedLoan = await apiRequest(`/api/loans/${loan.id}/renew`, { method: "POST" });
 			await Promise.all([loadLoans(), loadActivity(), onDashboardChanged()]);
-			showToast(`Đã gia hạn. Hạn trả mới: ${formatDate(renewedLoan.dueDate)}.`);
+			showToast(`Loan renewed. New due date: ${formatDate(renewedLoan.dueDate)}.`);
 		} catch (error) {
 			showToast(userMessage(error), true);
 			await Promise.all([loadLoans(), loadActivity(), onDashboardChanged()]);
@@ -440,7 +440,7 @@ export function initializeLoans(
 			});
 			checkoutDialog.close();
 			await Promise.all([loadLoans(), loadActivity(), onInventoryChanged()]);
-			showToast("Đã lập phiếu mượn. Hạn trả sau 14 ngày.");
+			showToast("Loan created. The book is due in 14 days.");
 		} catch (error) {
 			checkoutFormError.textContent = userMessage(error);
 			checkoutFormError.hidden = false;

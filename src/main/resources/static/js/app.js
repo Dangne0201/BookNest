@@ -141,9 +141,9 @@ function applyRole(role) {
 	membersTab.hidden = patron || role === "PUBLIC";
 	adminTab.hidden = role !== "ADMIN";
 	dashboard.setRole(role);
-	booksTab.textContent = role === "STAFF" || role === "ADMIN" ? "Kho sách" : "Danh mục";
-	loansTab.textContent = patron ? "Hoạt động của tôi" : "Mượn / Trả";
-	document.querySelector("#loans-panel h1").textContent = patron ? "Lượt mượn của tôi" : "Mượn / Trả";
+	booksTab.textContent = role === "STAFF" || role === "ADMIN" ? "Inventory" : "Catalog";
+	loansTab.textContent = patron ? "My activity" : "Loans";
+	document.querySelector("#loans-panel h1").textContent = patron ? "My loans" : "Loans";
 	books.setRole(role);
 	loans.setRole(role);
 	reservations.setRole(role);

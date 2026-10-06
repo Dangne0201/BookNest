@@ -1,11 +1,11 @@
 import { apiRequest, userMessage } from "./api.js";
 
 const STATUS_LABELS = {
-	AVAILABLE: "Sẵn sàng",
-	ON_LOAN: "Đang được mượn",
-	MAINTENANCE: "Đang bảo trì",
-	RETIRED: "Ngừng sử dụng",
-	ON_HOLD: "Đang được giữ"
+	AVAILABLE: "Available",
+	ON_LOAN: "On loan",
+	MAINTENANCE: "Under maintenance",
+	RETIRED: "Retired",
+	ON_HOLD: "On hold"
 };
 
 export function initializeBooks(
@@ -28,6 +28,7 @@ export function initializeBooks(
 	const addCopyForm = document.querySelector("#copy-add-form");
 	const booksList = document.querySelector("#books-list");
 	const booksTable = document.querySelector("#books-table-wrap");
+	const booksCards = document.querySelector("#books-cards");
 	const booksEmpty = document.querySelector("#books-empty");
 	const booksLoading = document.querySelector("#books-loading");
 	const booksFeedback = document.querySelector("#books-feedback");
@@ -117,18 +118,97 @@ export function initializeBooks(
 		const actionsCell = document.createElement("td");
 		const actions = document.createElement("div");
 		actions.className = "row-actions";
-		actions.append(makeActionButton("Chi tiết", "copies", book.id));
+		actions.append(makeActionButton("Details", "copies", book.id));
 		if (canManage()) {
 			actions.append(
-				makeActionButton("Sửa", "edit", book.id),
-				makeActionButton("Xóa", "delete", book.id, "button button-danger button-small")
+				makeActionButton("Edit", "edit", book.id),
+				makeActionButton("Delete", "delete", book.id, "button button-danger button-small")
 			);
 		} else if (role === "PATRON" && book.availableCopies === 0) {
-			actions.append(makeActionButton("Đặt trước", "reserve", book.id, "button button-primary button-small"));
+			actions.append(makeActionButton("Reserve", "reserve", book.id, "button button-primary button-small"));
 		}
 		actionsCell.append(actions);
 		row.append(actionsCell);
 		return row;
+	}
+
+	function renderBookCard(book) {
+		const card = document.createElement("article");
+		card.className = "book-card";
+		card.setAttribute("role", "listitem");
+		card.setAttribute("aria-labelledby", `book-card-title-${book.id}`);
+
+		const cover = document.createElement("div");
+		cover.className = `book-cover ${getCoverPalette(book.genre)}`;
+		cover.setAttribute("aria-hidden", "true");
+		const coverKicker = document.createElement("span");
+		coverKicker.className = "book-cover-kicker";
+		coverKicker.textContent = "BOOKNEST · SHARED LIBRARY";
+		const coverTitle = document.createElement("span");
+		coverTitle.className = "book-cover-title";
+		coverTitle.textContent = book.title;
+		cover.append(coverKicker, coverTitle);
+
+		const content = document.createElement("div");
+		content.className = "book-card-content";
+		const genre = document.createElement("span");
+		genre.className = "book-genre";
+		genre.textContent = book.genre || "Uncategorized";
+
+		const title = document.createElement("h3");
+		title.className = "book-card-title";
+		title.id = `book-card-title-${book.id}`;
+		title.textContent = book.title;
+
+		const author = document.createElement("p");
+		author.className = "book-card-author";
+		author.textContent = book.author;
+
+		const metadata = document.createElement("p");
+		metadata.className = "book-card-metadata";
+		metadata.textContent = book.publicationYear
+			? `Published ${book.publicationYear}`
+			: "Publication year unavailable";
+
+		const description = document.createElement("p");
+		description.className = "book-card-description";
+		description.textContent = book.description || "No description is available for this title.";
+
+		const availability = document.createElement("p");
+		availability.className = `book-card-availability${book.availableCopies > 0 ? " is-available" : ""}`;
+		availability.textContent = book.availableCopies > 0
+			? `${book.availableCopies} ${book.availableCopies === 1 ? "copy" : "copies"} available`
+			: "No copies currently available";
+
+		const actions = document.createElement("div");
+		actions.className = "book-card-actions";
+		actions.append(makeActionButton(
+			role === "PATRON" && book.availableCopies > 0 ? "View copies to borrow" : "View details",
+			"copies",
+			book.id,
+			"button button-primary button-small"
+		));
+		if (role === "PATRON" && book.availableCopies === 0) {
+			actions.append(makeActionButton(
+				"Reserve",
+				"reserve",
+				book.id,
+				"button button-secondary button-small"
+			));
+		}
+
+		content.append(genre, title, author, metadata, description, availability, actions);
+		card.append(cover, content);
+		return card;
+	}
+
+	function getCoverPalette(genre) {
+		const paletteCount = 5;
+		let hash = 0;
+		for (const character of genre || "") {
+			hash = (hash * 31 + character.codePointAt(0)) >>> 0;
+		}
+		return `book-cover-palette-${hash % paletteCount}`;
 	}
 
 	function updateSummary() {
@@ -141,22 +221,24 @@ export function initializeBooks(
 
 	function renderBooks() {
 		booksList.replaceChildren(...books.map(renderBook));
+		booksCards.replaceChildren(...books.map(renderBookCard));
 		updateSummary();
 		booksLoading.hidden = true;
-		booksTable.hidden = books.length === 0;
+		booksTable.hidden = books.length === 0 || !canManage();
+		booksCards.hidden = books.length === 0 || canManage();
 		booksEmpty.hidden = books.length !== 0;
 		if (books.length === 0) {
 			const hasFilters = booksQuery.value || booksGenre.value || booksAvailability.value;
 			document.querySelector("#books-empty h3").textContent = hasFilters
-				? "Không tìm thấy đầu sách phù hợp"
-				: "Thư viện chưa có đầu sách";
+				? "No matching books found"
+				: "No books in the library yet";
 			document.querySelector("#books-empty p").textContent = hasFilters
-				? "Thử thay đổi từ khóa hoặc bộ lọc."
-				: "Thêm đầu sách đầu tiên để bắt đầu quản lý các bản sách.";
+				? "Try changing your search or filters."
+				: "Add the first title to start managing copies.";
 		}
 		booksPagination.hidden = !bookPageResult || bookPageResult.totalPages <= 1;
 		if (bookPageResult) {
-			booksPageStatus.textContent = `Trang ${bookPageResult.page + 1} / ${Math.max(bookPageResult.totalPages, 1)} · ${bookPageResult.totalElements} đầu sách`;
+			booksPageStatus.textContent = `Page ${bookPageResult.page + 1} of ${Math.max(bookPageResult.totalPages, 1)} · ${bookPageResult.totalElements} titles`;
 			document.querySelector("#books-previous").disabled = bookPageResult.first;
 			document.querySelector("#books-next").disabled = bookPageResult.last;
 		}
@@ -165,6 +247,7 @@ export function initializeBooks(
 	async function loadBooks() {
 		booksLoading.hidden = false;
 		booksTable.hidden = true;
+		booksCards.hidden = true;
 		booksEmpty.hidden = true;
 		setFeedback(booksFeedback, "");
 		try {
@@ -225,7 +308,7 @@ export function initializeBooks(
 				body: JSON.stringify({ copyId })
 			});
 			copiesDialog.close();
-			showToast("Đã mượn sách. Hạn trả sau 14 ngày.");
+			showToast("Book checked out. It is due in 14 days.");
 			await Promise.all([loadBooks(), onLoansChanged()]);
 		} catch (error) {
 			setFeedback(copiesFeedback, userMessage(error), true);
@@ -240,7 +323,7 @@ export function initializeBooks(
 				method: "POST",
 				body: JSON.stringify({ bookId: book.id })
 			});
-			showToast("Đã vào hàng chờ đặt trước.");
+			showToast("You have joined the reservation queue.");
 			await onLoansChanged();
 		} catch (error) {
 			showToast(userMessage(error), true);
@@ -260,7 +343,7 @@ export function initializeBooks(
 		bookForm.elements.publicationYear.value = book?.publicationYear ?? "";
 		bookForm.elements.publicationYear.max = String(new Date().getFullYear() + 1);
 		bookForm.elements.description.value = book?.description || "";
-		bookDialogTitle.textContent = book ? "Chỉnh sửa đầu sách" : "Thêm đầu sách";
+		bookDialogTitle.textContent = book ? "Edit book" : "Add a book";
 		bookDialog.showModal();
 		bookForm.elements.title.focus();
 	}
@@ -270,11 +353,11 @@ export function initializeBooks(
 		row.className = "copy-row";
 		const identifier = document.createElement("span");
 		identifier.className = "copy-id";
-		identifier.textContent = `Bản sách #${copy.id}`;
+		identifier.textContent = `Copy #${copy.id}`;
 
 		const select = document.createElement("select");
 		select.className = "copy-status";
-		select.setAttribute("aria-label", `Trạng thái bản sách ${copy.id}`);
+		select.setAttribute("aria-label", `Status for copy ${copy.id}`);
 		Object.entries(STATUS_LABELS).forEach(([value, label]) => {
 			const option = document.createElement("option");
 			option.value = value;
@@ -289,7 +372,7 @@ export function initializeBooks(
 		const save = document.createElement("button");
 		save.type = "button";
 		save.className = "button button-secondary button-small";
-		save.textContent = "Lưu trạng thái";
+		save.textContent = "Save status";
 		save.disabled = copy.status === "ON_LOAN";
 		save.addEventListener("click", async () => {
 			setButtonBusy(save, true);
@@ -298,7 +381,7 @@ export function initializeBooks(
 					method: "PUT",
 					body: JSON.stringify({ status: select.value })
 				});
-				setFeedback(copiesFeedback, "Đã cập nhật trạng thái bản sách.");
+				setFeedback(copiesFeedback, "Copy status updated.");
 				await loadCopies();
 				await loadBooks();
 				await onDashboardChanged();
@@ -312,16 +395,16 @@ export function initializeBooks(
 		const remove = document.createElement("button");
 		remove.type = "button";
 		remove.className = "button button-danger button-small";
-		remove.textContent = "Xóa";
-		remove.setAttribute("aria-label", `Xóa bản sách ${copy.id}`);
+		remove.textContent = "Delete";
+		remove.setAttribute("aria-label", `Delete copy ${copy.id}`);
 		remove.addEventListener("click", async () => {
-			if (!window.confirm(`Xóa bản sách #${copy.id}? Thao tác này không thể hoàn tác.`)) {
+			if (!window.confirm(`Delete copy #${copy.id}? This cannot be undone.`)) {
 				return;
 			}
 			setButtonBusy(remove, true);
 			try {
 				await apiRequest(`/api/books/${selectedBookId}/copies/${copy.id}`, { method: "DELETE" });
-				setFeedback(copiesFeedback, "Đã xóa bản sách.");
+				setFeedback(copiesFeedback, "Copy deleted.");
 				await loadCopies();
 				await loadBooks();
 				await onDashboardChanged();
@@ -341,7 +424,7 @@ export function initializeBooks(
 				const borrow = document.createElement("button");
 				borrow.type = "button";
 				borrow.className = "button button-primary button-small";
-				borrow.textContent = "Mượn bản này";
+				borrow.textContent = "Borrow this copy";
 				borrow.addEventListener("click", () => borrowCopy(copy.id, borrow));
 				row.append(borrow);
 			} else {
@@ -365,7 +448,7 @@ export function initializeBooks(
 			const copies = await apiRequest(`/api/books/${selectedBookId}/copies`);
 			copiesList.replaceChildren(...copies.map(appendCopyRow));
 			copiesEmpty.hidden = copies.length !== 0;
-			copiesSummary.textContent = `${copies.length} bản sách trong thư viện`;
+			copiesSummary.textContent = `${copies.length} ${copies.length === 1 ? "copy" : "copies"} in the library`;
 		} catch (error) {
 			setFeedback(copiesFeedback, userMessage(error), true);
 		} finally {
@@ -387,22 +470,22 @@ export function initializeBooks(
 
 	function renderBookDetails(book) {
 		const details = [
-			["Tác giả", book.author],
+			["Author", book.author],
 			["ISBN", book.isbn],
-			["Thể loại", book.genre],
-			["Năm xuất bản", book.publicationYear]
+			["Genre", book.genre],
+			["Publication year", book.publicationYear]
 		];
 		bookDetails.replaceChildren();
 		details.forEach(([label, value]) => {
 			const term = document.createElement("dt");
 			term.textContent = label;
 			const description = document.createElement("dd");
-			description.textContent = value || "Chưa có thông tin";
+			description.textContent = value || "Not available";
 			bookDetails.append(term, description);
 		});
 		if (book.description) {
 			const term = document.createElement("dt");
-			term.textContent = "Mô tả";
+			term.textContent = "Description";
 			const description = document.createElement("dd");
 			description.className = "book-description";
 			description.textContent = book.description;
@@ -416,7 +499,7 @@ export function initializeBooks(
 		button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 	});
 
-	booksList.addEventListener("click", async event => {
+	async function handleBookAction(event) {
 		const button = event.target.closest("button[data-action]");
 		if (!button) {
 			return;
@@ -433,16 +516,16 @@ export function initializeBooks(
 			showBookForm(book);
 		} else if (button.dataset.action === "delete") {
 			if (book.totalCopies > 0) {
-				showToast("Xóa các bản sách thuộc đầu sách này trước.", true);
+				showToast("Delete this title's copies before deleting the title.", true);
 				return;
 			}
-			if (!window.confirm(`Xóa đầu sách “${book.title}”? Thao tác này không thể hoàn tác.`)) {
+			if (!window.confirm(`Delete "${book.title}"? This cannot be undone.`)) {
 				return;
 			}
 			setButtonBusy(button, true);
 			try {
 				await apiRequest(`/api/books/${book.id}`, { method: "DELETE" });
-				showToast("Đã xóa đầu sách.");
+				showToast("Book deleted.");
 				await loadBooks();
 			} catch (error) {
 				showToast(userMessage(error), true);
@@ -450,7 +533,10 @@ export function initializeBooks(
 				setButtonBusy(button, false);
 			}
 		}
-	});
+	}
+
+	booksList.addEventListener("click", handleBookAction);
+	booksCards.addEventListener("click", handleBookAction);
 
 	bookForm.addEventListener("submit", async event => {
 		event.preventDefault();
@@ -478,7 +564,7 @@ export function initializeBooks(
 				body
 			});
 			bookDialog.close();
-			showToast(id ? "Đã cập nhật đầu sách." : "Đã thêm đầu sách.");
+			showToast(id ? "Book updated." : "Book added.");
 			await loadBooks();
 			if (selectedBookId && copiesDialog.open) {
 				const updatedBook = books.find(book => book.id === selectedBookId);
@@ -503,7 +589,7 @@ export function initializeBooks(
 				method: "POST",
 				body: JSON.stringify({ status: addCopyForm.elements.status.value })
 			});
-			setFeedback(copiesFeedback, "Đã thêm bản sách.");
+			setFeedback(copiesFeedback, "Copy added.");
 			await loadCopies();
 			await loadBooks();
 			await onDashboardChanged();
