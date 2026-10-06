@@ -665,4 +665,33 @@ The opt-in, idempotent local demo initializer is already implemented and verifie
 - [x] `README.md` — reviewer setup, system/data model, demo and reset guidance, representative API examples, testing, decisions, and limitations.
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md`, and `PHASE_CHECKLIST.vi.md` — accurate Phase 9 scope, bilingual ledger, and verification status.
 
-**State:** Implemented on 2026-10-06; awaiting user acceptance. README now describes the project and implemented scope, architecture/data relationships, local Compose setup and volume, admin recovery, opt-in demo seeding and credentials, safe shutdown and warned destructive reset, role/security rules, API examples and response shapes, pagination, tests, design choices, and limitations. `git diff --check` and `docker compose config --quiet` passed. No application code, seed, credentials, database rows, containers, or volumes were changed for Phase 9. No Maven suite was run because this phase changed documentation only; the latest verified suite remains 62 passing tests from Phase 8.
+**State:** Accepted by the user on 2026-10-06 and published as `e7ae666`. README documents reviewer setup, architecture/data relationships, local Compose setup and volume, admin recovery, opt-in demo seeding and credentials, safe shutdown and warned destructive reset, role/security rules, API examples and response shapes, pagination, tests, design choices, and limitations. `git diff --check` and `docker compose config --quiet` passed. No application code, seed, credentials, database rows, containers, or volumes were changed for Phase 9; no Maven suite was run because this was documentation-only.
+
+### Phase 10 — End-to-end verification (in progress)
+
+This final phase verifies the committed application and reviewer workflow against the accepted scope. Prefer read-only checks and preserve all existing PostgreSQL data and named volumes. Do not reset the database, delete Docker resources, rotate credentials, or change application behavior as part of verification.
+
+#### Scope
+
+- Run the complete Maven verification suite and validate the Compose configuration; build/start the BookNest stack if Docker is available.
+- Verify app/database readiness and the served static page, then exercise demo authentication and a patron checkout followed by a staff return if the user authorizes the resulting persistent history records.
+- Verify the application can restart while the existing named PostgreSQL volume and data remain intact; do not run `docker compose down -v` or any Docker prune command.
+- Compare before/after database counts and state; report all exact commands, outcomes, environmental blockers, and any unverified flows.
+- Do not make code fixes or reset/cleanup existing database records without first discussing the scope and impact with the user.
+
+#### Acceptance checks
+
+- [x] `.\mvnw.cmd --no-transfer-progress clean verify` passes; report exact test totals and any failure.
+- [x] `docker compose config --quiet` passes and the BookNest image builds successfully, when Docker is available.
+- [x] BookNest app and PostgreSQL become healthy; readiness reports the database up and `/` serves the expected static UI.
+- [x] Demo sign-in works and an end-to-end checkout/return flow succeeds, or the flow is explicitly marked unverified with the reason. Any persistent test loan/activity records are disclosed and require user approval before creation.
+- [x] Restart verification confirms existing database state persists; existing named volumes are never removed or reset.
+- [x] Final database state, exact checks, failures/limitations, and changed files are recorded without claiming unrun verification.
+
+#### Anticipated file ledger
+
+- [x] `PHASE_CHECKLIST.md` and `PHASE_CHECKLIST.vi.md` — matching Phase 10 plan, exact verification results, and any limitations.
+- [x] `AGENTS.md` — update the durable checkpoint with factual Phase 10 results after verification.
+- [x] Application or deployment files — no changes were needed; no runtime defect was found.
+
+**State:** Verification completed on 2026-10-06; awaiting user acceptance. `.\mvnw.cmd --no-transfer-progress clean verify` passed 62 tests (0 failures, errors, or skips); every static JS file passed `node --check`; `docker compose config --quiet` and `docker compose build` passed. The app image was rebuilt and app container recreated using `docker compose up --build -d`; after its normal startup interval both services were healthy, readiness was UP with DB UP, and `/` returned HTTP 200 with title `BookNest | Thư viện của bạn`. Demo STAFF and PATRON sign-ins succeeded. With explicit user approval, the patron checked out The Hobbit copy #19 (due 2026-10-20), then staff returned it; the UI showed the returned state, checkout/return actors, and both lifecycle events. The returned test loan and two activity events are intentionally retained. Counts before the transaction were accounts/books/copies/members/loans/reservations/activity = `6/4/9/4/5/6/0`; after it and after app recreation they were `6/4/9/4/6/6/2`. Loan #12 remains returned and copy #19 is `AVAILABLE`; all other tracked table counts remained unchanged. The `booknest-postgres-data` volume was present after restart. No volume/container/database was deleted or reset. One readiness probe immediately after container recreation raced startup and the connection closed; after 12 seconds the app was healthy and the readiness and static-page checks passed. No application code or deployment files changed; only the bilingual checklists and `AGENTS.md` were updated.

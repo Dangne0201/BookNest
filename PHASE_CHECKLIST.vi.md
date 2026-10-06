@@ -666,4 +666,33 @@ Trình khởi tạo dữ liệu demo local bật tùy chọn, an toàn khi chạ
 - [x] `README.md` — hướng dẫn reviewer, hệ thống/mô hình dữ liệu, demo/reset, ví dụ API, test, quyết định thiết kế và giới hạn.
 - [x] `AGENTS.md`, `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — phạm vi Phase 9 chính xác, ledger song ngữ và kết quả xác minh.
 
-**Trạng thái:** Đã triển khai ngày 2026-10-06; chờ người dùng nghiệm thu. README hiện mô tả dự án và phạm vi đã làm, kiến trúc/liên kết dữ liệu, Compose local và volume, khôi phục admin, seed demo bật tùy chọn và credentials, shutdown an toàn cùng reset destructive có cảnh báo, vai trò/bảo mật, ví dụ API và response, phân trang, test, quyết định thiết kế và giới hạn. `git diff --check` và `docker compose config --quiet` đều đạt. Không thay đổi code ứng dụng, seed, credential, dữ liệu DB, container hoặc volume trong Phase 9. Không chạy Maven vì phase chỉ sửa tài liệu; bộ test mới nhất đã xác minh là 62 test đạt từ Phase 8.
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và phase đã xuất bản trong commit `e7ae666`. README mô tả hướng dẫn reviewer, kiến trúc/liên kết dữ liệu, Compose local và volume, khôi phục admin, seed demo bật tùy chọn và credentials, shutdown an toàn cùng reset destructive có cảnh báo, vai trò/bảo mật, ví dụ API/response, phân trang, test, quyết định thiết kế và giới hạn. `git diff --check` và `docker compose config --quiet` đều đạt. Không thay đổi code ứng dụng, seed, credential, dữ liệu DB, container hoặc volume trong Phase 9; không chạy Maven vì đây là phase chỉ tài liệu.
+
+### Phase 10 — Kiểm chứng end-to-end (đang thực hiện)
+
+Phase cuối xác minh ứng dụng đã nghiệm thu và hướng dẫn reviewer. Ưu tiên kiểm tra chỉ đọc, giữ nguyên toàn bộ dữ liệu PostgreSQL và named volume hiện có. Không reset database, xóa Docker resource, đổi credential hay thay đổi hành vi ứng dụng trong lúc kiểm chứng.
+
+#### Phạm vi
+
+- Chạy đầy đủ Maven verification và kiểm tra cấu hình Compose; build/khởi động BookNest nếu Docker khả dụng.
+- Kiểm tra readiness của app/database và static page được phục vụ; sau đó thử đăng nhập demo và luồng patron mượn sách rồi staff trả sách nếu người dùng cho phép tạo lịch sử giao dịch tồn tại lâu dài.
+- Xác minh khởi động lại ứng dụng nhưng vẫn giữ nguyên named PostgreSQL volume và dữ liệu hiện có; không chạy `docker compose down -v` hoặc lệnh Docker prune.
+- So sánh số lượng/trạng thái dữ liệu trước/sau và báo chính xác command, kết quả, trở ngại môi trường, luồng chưa xác minh.
+- Không sửa code hoặc reset/dọn dữ liệu hiện có nếu chưa thảo luận phạm vi và tác động với người dùng.
+
+#### Tiêu chí nghiệm thu
+
+- [x] `.\mvnw.cmd --no-transfer-progress clean verify` đạt; ghi số test chính xác và mọi lỗi nếu có.
+- [x] `docker compose config --quiet` đạt và image BookNest build thành công nếu Docker khả dụng.
+- [x] App BookNest và PostgreSQL healthy; readiness báo database hoạt động và `/` phục vụ đúng giao diện tĩnh.
+- [x] Đăng nhập demo hoạt động, luồng mượn/trả end-to-end thành công, hoặc ghi rõ luồng chưa kiểm chứng và lý do. Cần người dùng cho phép trước khi tạo loan/activity tồn tại lâu dài.
+- [x] Kiểm chứng restart xác nhận dữ liệu hiện có còn nguyên; tuyệt đối không xóa/reset named volume.
+- [x] Ghi nhận trạng thái database cuối, kiểm tra chính xác, lỗi/giới hạn và file thay đổi; không nhận đã chạy nếu chưa thực hiện.
+
+#### Danh sách file dự kiến
+
+- [x] `PHASE_CHECKLIST.md` và `PHASE_CHECKLIST.vi.md` — kế hoạch Phase 10 khớp nhau, kết quả xác minh chính xác và giới hạn.
+- [x] `AGENTS.md` — cập nhật checkpoint bền vững bằng kết quả Phase 10 thực tế sau khi xác minh.
+- [x] File ứng dụng/deployment — không cần chỉnh sửa; không phát hiện lỗi runtime.
+
+**Trạng thái:** Đã hoàn tất kiểm chứng ngày 2026-10-06; chờ người dùng nghiệm thu. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); mọi file JS tĩnh đạt `node --check`; `docker compose config --quiet` và `docker compose build` đạt. Đã build lại image và tạo lại app container bằng `docker compose up --build -d`; sau thời gian khởi động bình thường, hai service healthy, readiness UP với DB UP và `/` trả HTTP 200 cùng title `BookNest | Thư viện của bạn`. Đăng nhập demo STAFF và PATRON thành công. Được người dùng cho phép, patron mượn bản The Hobbit #19 (hạn trả 2026-10-20), sau đó staff nhận trả; UI hiển thị đã trả, người thao tác mượn/trả và cả hai event lịch sử. Giữ lại lượt mượn kiểm thử đã trả cùng hai activity event. Số lượng trước giao dịch theo thứ tự account/book/copy/member/loan/reservation/activity là `6/4/9/4/5/6/0`; sau giao dịch và sau khi tạo lại app container là `6/4/9/4/6/6/2`. Loan #12 vẫn được đánh dấu đã trả, bản #19 là `AVAILABLE`; số lượng các bảng khác được theo dõi không đổi. Volume `booknest-postgres-data` vẫn hiện diện sau restart. Không xóa/reset volume, container hay database. Một lần kiểm tra readiness ngay sau khi container tạo lại bị đua với quá trình startup nên kết nối bị đóng; sau 12 giây app healthy và readiness/static page đều đạt. Không đổi code ứng dụng hoặc deployment; chỉ cập nhật checklist song ngữ và `AGENTS.md`.
