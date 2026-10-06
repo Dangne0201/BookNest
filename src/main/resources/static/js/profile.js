@@ -21,6 +21,8 @@ export function initializeProfile(showToast) {
 			form.elements.email.value = profile.email || "";
 			form.elements.phone.value = profile.phone || "";
 			form.elements.notes.value = profile.notes || "";
+			button.disabled = false;
+			button.focus();
 			dialog.showModal();
 			form.elements.fullName.focus();
 		} catch (error) {

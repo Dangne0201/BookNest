@@ -623,7 +623,7 @@ Các lát cắt UI tăng dần hiện đã bao gồm danh mục công khai, hồ
 - [x] Ở viewport 360px và 375px, `document.documentElement.scrollWidth` không lớn hơn `clientWidth`; nếu bảng rộng hơn màn hình thì chỉ wrapper bảng cuộn. Bố cục vẫn sử dụng được trên tablet và desktop.
 - [x] Các luồng chính patron và nhân viên vẫn hoạt động: danh mục công khai, đăng nhập/hồ sơ/mượn/đặt trước/hoạt động của bạn đọc và sách/thành viên/lượt mượn/đặt trước/dashboard của nhân viên. Các test UI của lát cắt trước đã kiểm tra từng thao tác ghi; đợt polish này kiểm tra lại điều hướng vai trò và các màn hình liên quan.
 - [x] Dữ liệu riêng patron vẫn giới hạn cho đúng tài khoản; công cụ staff/admin được ẩn với patron và API từ chối vai trò không được phép.
-- [ ] Dialog và các trạng thái loading/empty/success/error/confirmation dùng được đầy đủ bằng bàn phím mà không kẹt/mất focus. Đã kiểm tra tab bằng phím mũi tên và điều khiển đóng/mở modal; chưa kiểm tra đầy đủ dialog/focus/xác nhận chỉ bằng bàn phím.
+- [ ] Dialog và các trạng thái loading/empty/success/error/confirmation dùng được đầy đủ bằng bàn phím mà không kẹt/mất focus. Lát cắt bên dưới kiểm tra đóng dialog bằng Escape, giữ/khôi phục focus và bảo vệ dialog credential chỉ xem một lần; vẫn chưa kiểm tra toàn diện xác nhận và mọi trạng thái feedback chỉ bằng bàn phím.
 - [x] Ghi dữ liệu tiếp tục dùng API cùng origin và CSRF; thao tác thành công làm mới danh sách/chỉ số liên quan; lỗi hiển thị dễ hiểu và không giả báo thành công.
 - [x] Nội dung không tin cậy từ catalog/hồ sơ/tài khoản/lịch sử được render như text, không tạo phần tử chèn; không còn nút giả hay thao tác không hoạt động.
 - [x] Test tự động liên quan, kiểm tra cú pháp JavaScript, cấu hình Compose và kiểm tra browser đạt; kết quả/giới hạn được ghi trong checklist song ngữ.
@@ -695,4 +695,32 @@ Phase cuối xác minh ứng dụng đã nghiệm thu và hướng dẫn reviewe
 - [x] `AGENTS.md` — cập nhật checkpoint bền vững bằng kết quả Phase 10 thực tế sau khi xác minh.
 - [x] File ứng dụng/deployment — không cần chỉnh sửa; không phát hiện lỗi runtime.
 
-**Trạng thái:** Đã hoàn tất kiểm chứng ngày 2026-10-06; chờ người dùng nghiệm thu. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); mọi file JS tĩnh đạt `node --check`; `docker compose config --quiet` và `docker compose build` đạt. Đã build lại image và tạo lại app container bằng `docker compose up --build -d`; sau thời gian khởi động bình thường, hai service healthy, readiness UP với DB UP và `/` trả HTTP 200 cùng title `BookNest | Thư viện của bạn`. Đăng nhập demo STAFF và PATRON thành công. Được người dùng cho phép, patron mượn bản The Hobbit #19 (hạn trả 2026-10-20), sau đó staff nhận trả; UI hiển thị đã trả, người thao tác mượn/trả và cả hai event lịch sử. Giữ lại lượt mượn kiểm thử đã trả cùng hai activity event. Số lượng trước giao dịch theo thứ tự account/book/copy/member/loan/reservation/activity là `6/4/9/4/5/6/0`; sau giao dịch và sau khi tạo lại app container là `6/4/9/4/6/6/2`. Loan #12 vẫn được đánh dấu đã trả, bản #19 là `AVAILABLE`; số lượng các bảng khác được theo dõi không đổi. Volume `booknest-postgres-data` vẫn hiện diện sau restart. Không xóa/reset volume, container hay database. Một lần kiểm tra readiness ngay sau khi container tạo lại bị đua với quá trình startup nên kết nối bị đóng; sau 12 giây app healthy và readiness/static page đều đạt. Không đổi code ứng dụng hoặc deployment; chỉ cập nhật checklist song ngữ và `AGENTS.md`.
+**Trạng thái:** Người dùng đã nghiệm thu ngày 2026-10-06 và phase đã xuất bản trong commit `3514063`. `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); mọi file JS tĩnh đạt `node --check`; `docker compose config --quiet` và `docker compose build` đạt. Đã build lại image và tạo lại app container bằng `docker compose up --build -d`; sau thời gian khởi động bình thường, hai service healthy, readiness UP với DB UP và `/` trả HTTP 200 cùng title `BookNest | Thư viện của bạn`. Đăng nhập demo STAFF và PATRON thành công. Được người dùng cho phép, patron mượn bản The Hobbit #19 (hạn trả 2026-10-20), sau đó staff nhận trả; UI hiển thị đã trả, người thao tác mượn/trả và cả hai event lịch sử. Giữ lại lượt mượn kiểm thử đã trả cùng hai activity event. Số lượng trước giao dịch theo thứ tự account/book/copy/member/loan/reservation/activity là `6/4/9/4/5/6/0`; sau giao dịch và sau khi tạo lại app container là `6/4/9/4/6/6/2`. Loan #12 vẫn được đánh dấu đã trả, bản #19 là `AVAILABLE`; số lượng các bảng khác được theo dõi không đổi. Volume `booknest-postgres-data` vẫn hiện diện sau restart. Không xóa/reset volume, container hay database. Một lần kiểm tra readiness ngay sau khi container tạo lại bị đua với quá trình startup nên kết nối bị đóng; sau 12 giây app healthy và readiness/static page đều đạt. Không đổi code ứng dụng hoặc deployment.
+
+### Ưu tiên tiếp theo — đóng dialog bằng bàn phím (đã duyệt)
+
+Người dùng chọn khắc phục giới hạn điều khiển dialog bằng bàn phím. Kiểm tra browser xác nhận focus được giữ bên trong modal và trả về control mở dialog khi đóng bằng nút đóng, nhưng nhấn Escape không đóng một dialog thông thường. Người dùng đã duyệt nhấn Escape để đóng dialog thông thường, đồng thời yêu cầu giữ dialog mật khẩu tạm chỉ xem một lần không bị đóng bằng phím này.
+
+#### Phạm vi
+
+- Cho Escape đóng các dialog ứng dụng thông thường (sách, bản sách, thành viên, checkout, đổi mật khẩu và hồ sơ patron), đồng thời giữ việc khôi phục focus về control đã mở.
+- Giữ focus được trả về nút mở dialog hồ sơ patron trong trường hợp dialog chỉ mở sau khi tải dữ liệu bất đồng bộ.
+- Không đóng dialog mật khẩu tạm một lần khi nhấn Escape để tránh vô tình làm mất credential.
+- Giữ nguyên nút đóng/hủy, validation, form và nghiệp vụ ghi dữ liệu; không thay đổi dữ liệu hay trang.
+- Kiểm tra bằng browser với bàn phím, cú pháp JavaScript tĩnh và Maven suite hiện tại nếu phù hợp với thay đổi.
+
+#### Tiêu chí nghiệm thu
+
+- [x] Escape đóng từng dialog thông thường được kiểm tra và trả focus về control mở dialog, gồm cả dialog hồ sơ patron tải bất đồng bộ.
+- [x] Tab vẫn giữ focus trong modal đang mở; Enter trên nút Đóng/Hủy vẫn hoạt động.
+- [x] Escape không đóng dialog mật khẩu tạm xem một lần.
+- [x] Kiểm tra đóng dialog không submit form hoặc ghi dữ liệu nghiệp vụ lâu dài.
+- [x] Kiểm tra cú pháp JavaScript liên quan và Maven verification đạt; ghi kết quả chính xác vào cả hai checklist.
+
+#### Danh sách file dự kiến
+
+- [x] `src/main/resources/static/js/app.js` — xử lý Escape tập trung cho mọi dialog ngoại trừ dialog mật khẩu tạm xem một lần.
+- [x] `src/main/resources/static/js/profile.js` — giữ nút gọi mở làm focus target trước khi mở dialog sau khi tải hồ sơ bất đồng bộ.
+- [x] `PHASE_CHECKLIST.md`, `PHASE_CHECKLIST.vi.md` và `AGENTS.md` — ghi phạm vi, kiểm chứng và checkpoint bền vững.
+
+**Trạng thái:** Đã triển khai, kiểm chứng và được người dùng nghiệm thu ngày 2026-10-06. `app.js` đóng mọi dialog thông thường đang mở khi nhấn Escape, ngoại trừ `#temporary-password-dialog`. `profile.js` đặt lại control mở hồ sơ async làm đích khôi phục focus. `node --check` đạt với mọi file JavaScript tĩnh; `.\mvnw.cmd --no-transfer-progress clean verify` đạt 62 test (0 failure/error/skip); `docker compose config --quiet`, `docker compose build` và readiness đều đạt. App Compose sau cập nhật healthy với DB UP. Browser xác nhận Escape đóng dialog sách, bản sách, thành viên, checkout, đổi mật khẩu và hồ sơ patron; focus quay về nút mở dialog, gồm hồ sơ async. Nhấn Tab liên tục 14 lần vẫn giữ focus bên trong dialog copies. Dialog mật khẩu tạm chỉ xem một lần vẫn mở khi nhấn Escape và đóng được bằng nút riêng nhấn Enter. Nút Đóng hồ sơ cũng hoạt động bằng Enter và trả focus. Không submit form hay thay đổi dữ liệu nghiệp vụ; số bảng account/book/copy/member/loan/reservation/activity vẫn là `6/4/9/4/6/6/2`. Named volume và dữ liệu giao dịch cũ được giữ nguyên. Kiểm thử UI admin và kiểm tra toàn diện xác nhận/feedback bằng bàn phím là các việc riêng chưa làm.

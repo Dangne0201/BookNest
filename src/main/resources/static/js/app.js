@@ -22,6 +22,15 @@ function showToast(message, isError = false) {
 	}
 }
 
+document.querySelectorAll("dialog:not(#temporary-password-dialog)").forEach(dialog => {
+	dialog.addEventListener("keydown", event => {
+		if (event.key === "Escape" && !event.defaultPrevented) {
+			event.preventDefault();
+			dialog.close();
+		}
+	});
+});
+
 let loans;
 let reservations;
 const dashboard = initializeDashboard();
