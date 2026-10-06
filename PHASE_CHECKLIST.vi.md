@@ -756,8 +756,8 @@ Checklist này theo dõi phần kiểm chứng và bàn giao còn lại trong ph
 
 - [x] Rà diff cuối và trạng thái repository; chỉ có source/tài liệu có chủ đích, không có credential hoặc file sinh tự động.
 - [x] Báo kết quả và giới hạn còn lại để người dùng nghiệm thu; người dùng đã nghiệm thu diff ngày 2026-10-06. Enter/Space để đóng dialog vẫn chưa xác minh và đã ghi rõ ở trên.
-- [ ] Sau khi được nghiệm thu, commit theo quy ước message của repository và thêm co-author trailer bắt buộc; sau đó push lên GitHub đã cấu hình theo chấp thuận xuất bản thường trực của người dùng.
-- [ ] Xác minh commit, trạng thái đồng bộ remote và working tree sạch; ghi commit/test chính xác vào checklist này và `AGENTS.md`.
+- [x] Sau khi nghiệm thu, đã commit theo quy ước Conventional Commit của repository và thêm co-author trailer; `b1020ec` (`fix: clear one-time credentials on dialog close`) đã được push lên `origin/main`.
+- [x] Đã xác minh `b1020ec` trên `origin/main` và working tree sạch ngay sau khi push. Commit và kết quả kiểm thử được ghi tại đây và trong `AGENTS.md`: `clean verify` đạt 62 test; cả 10 file JavaScript tĩnh qua `node --check`; Compose config/build, readiness, smoke test role/viewport chỉ đọc và `git diff --check` đều đạt. Tương tác Enter/Space vẫn được ghi rõ là chưa xác minh.
 
 #### 4. Chuẩn bị demo/bàn giao cho reviewer (hoàn thiện, không chặn kỹ thuật)
 

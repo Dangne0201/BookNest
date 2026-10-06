@@ -755,8 +755,8 @@ This checklist tracks the remaining verification and handoff work for the curren
 
 - [x] Review the final diff and repository status; ensure only intended source/documentation changes are included and no credential or generated artifact is committed.
 - [x] Present the results and remaining limitation for user acceptance; the user accepted the diff on 2026-10-06. Enter/Space dialog activation remains explicitly unverified as recorded above.
-- [ ] After acceptance, commit with the repository's established message convention and required co-author trailer, then push to the configured GitHub remote with the user's standing publication authorization.
-- [ ] Verify the resulting commit, remote synchronization, and clean working tree; record exact commit/test results in this checklist and `AGENTS.md`.
+- [x] After acceptance, committed using the repository's Conventional Commit style and required co-author trailer; `b1020ec` (`fix: clear one-time credentials on dialog close`) was pushed to `origin/main`.
+- [x] Verified `b1020ec` on `origin/main` and a clean working tree immediately after the push. Exact commit and verification results are recorded here and in `AGENTS.md`: `clean verify` passed 62 tests; all 10 static JavaScript files passed `node --check`; Compose config/build, readiness, read-only role/viewport smoke, and `git diff --check` passed. The Enter/Space interaction remains documented as unverified.
 
 #### 4. Prepare a reviewer/demo handoff (polish, not a feature gate)
 
