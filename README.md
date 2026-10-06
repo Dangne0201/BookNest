@@ -112,6 +112,15 @@ The seed creates one sample staff account, two patron accounts with linked profi
 
 These published sample credentials are intentionally convenient for local exploration only. Never enable demo seeding or use these credentials in a public deployment.
 
+### Suggested reviewer walkthrough
+
+1. Open the public catalog without signing in; inspect title details and copy availability.
+2. Sign in as `demo-patron` and open **Hoạt động của tôi** to review that patron's loans, held/waiting reservations, and activity. Avoid **Nhận sách** and cancellation actions if you want to preserve the seeded state.
+3. Sign out, sign in as `demo-staff`, and inspect the shared dashboard, books/copies, members, loans/returns, reservation queue, and activity. Avoid submitting forms or return/queue actions unless you intend to change the local sample data.
+4. Admin is intentionally not seeded. If reviewing account provisioning, use the local first-admin/recovery procedure above; it prints a one-time password, and running it again rotates the admin password and invalidates prior sessions.
+
+For a design discussion, explain the same-origin session-cookie and CSRF flow, backend role/ownership checks, PostgreSQL constraints and transaction/locking rules, forward-only Flyway migrations, opt-in repeat-safe demo seed, and the documented limits of this local learning portfolio.
+
 ## Access and security
 
 - Roles are enforced by backend authorization: `ADMIN`, `STAFF`, and `PATRON`. Visitors may only read the catalog.

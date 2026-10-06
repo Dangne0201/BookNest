@@ -22,6 +22,11 @@ export function initializeAdmin(showToast) {
 		feedback.hidden = !message;
 	}
 
+	function clearTemporaryPassword() {
+		credentialValue.textContent = "";
+		credentialUsername.textContent = "";
+	}
+
 	function showTemporaryPassword(account) {
 		credentialUsername.textContent = `Tài khoản: ${account.username}`;
 		credentialValue.textContent = account.temporaryPassword;
@@ -111,12 +116,12 @@ export function initializeAdmin(showToast) {
 
 	document.querySelectorAll('[data-close="temporary-password-dialog"]').forEach(button => {
 		button.addEventListener("click", () => {
+			clearTemporaryPassword();
 			credentialDialog.close();
 		});
 	});
 	credentialDialog.addEventListener("close", () => {
-		credentialValue.textContent = "";
-		credentialUsername.textContent = "";
+		clearTemporaryPassword();
 	});
 
 	return { loadAccounts };

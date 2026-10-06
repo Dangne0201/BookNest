@@ -197,8 +197,8 @@
 			</div>
 			<div id="books-empty" class="empty-state" hidden>
 				<span class="empty-icon" aria-hidden="true">▤</span>
-				<h3>Thư viện chưa có đầu sách</h3>
-				<p>Thêm đầu sách đầu tiên để bắt đầu quản lý các bản sách.</p>
+				<h3 aria-live="polite">Thư viện chưa có đầu sách</h3>
+				<p aria-live="polite">Thêm đầu sách đầu tiên để bắt đầu quản lý các bản sách.</p>
 				<button class="button button-secondary" type="button" data-action="add-book">Thêm đầu sách</button>
 			</div>
 			<div id="books-table-wrap" class="table-wrap" hidden>
@@ -239,8 +239,8 @@
 				</div>
 				<div id="members-empty" class="empty-state" hidden>
 					<span class="empty-icon" aria-hidden="true">♙</span>
-					<h3>Chưa có thành viên</h3>
-					<p>Thêm hồ sơ người mượn đầu tiên vào thư viện.</p>
+					<h3 aria-live="polite">Chưa có thành viên</h3>
+					<p aria-live="polite">Thêm hồ sơ người mượn đầu tiên vào thư viện.</p>
 					<button class="button button-secondary" type="button" data-action="add-member">Thêm thành viên</button>
 				</div>
 				<div id="members-table-wrap" class="table-wrap" hidden>
@@ -306,8 +306,8 @@
 				</div>
 				<div id="loans-empty" class="empty-state" hidden>
 					<span class="empty-icon" aria-hidden="true">↔</span>
-					<h3>Chưa có lượt mượn</h3>
-					<p>Tạo thành viên, đầu sách và bản sách sẵn sàng trong các mục tương ứng, rồi bắt đầu cho mượn.</p>
+					<h3 aria-live="polite">Chưa có lượt mượn</h3>
+					<p aria-live="polite">Tạo thành viên, đầu sách và bản sách sẵn sàng trong các mục tương ứng, rồi bắt đầu cho mượn.</p>
 					<button class="button button-secondary" type="button" data-action="checkout">Cho mượn sách</button>
 				</div>
 				<div id="loans-table-wrap" class="table-wrap" hidden>
@@ -335,7 +335,7 @@
 						<div><h2>Đặt trước / Hàng chờ</h2><p class="muted">Theo dõi các yêu cầu đặt trước của bạn.</p></div>
 					</div>
 					<div id="reservations-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-					<div id="reservations-empty" class="empty-state compact" hidden><p>Chưa có yêu cầu đặt trước.</p></div>
+					<div id="reservations-empty" class="empty-state compact" hidden><p aria-live="polite">Chưa có yêu cầu đặt trước.</p></div>
 					<div id="reservations-list" class="reservation-list"></div>
 				</div>
 				<section id="activity-section" class="activity-section" aria-labelledby="activity-heading">
@@ -366,7 +366,7 @@
 					</form>
 					<div id="activity-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
 					<div id="activity-loading" class="loading-state" role="status" hidden>Đang tải lịch sử…</div>
-					<div id="activity-empty" class="empty-state compact" hidden><p>Chưa có hoạt động phù hợp.</p></div>
+					<div id="activity-empty" class="empty-state compact" hidden><p aria-live="polite">Chưa có hoạt động phù hợp.</p></div>
 					<ol id="activity-list" class="activity-list" aria-live="polite"></ol>
 					<nav id="activity-pagination" class="pagination-controls" aria-label="Phân trang lịch sử hoạt động" hidden>
 						<button id="activity-previous" class="button button-quiet" type="button">Trang trước</button>
@@ -442,7 +442,7 @@
 				<span class="spinner" aria-hidden="true"></span> Đang tải các bản sách…
 			</div>
 			<div id="copies-empty" class="empty-state compact" hidden>
-				<p>Đầu sách này chưa có bản sách nào.</p>
+				<p aria-live="polite">Đầu sách này chưa có bản sách nào.</p>
 			</div>
 			<ul id="copies-list" class="copies-list" aria-label="Danh sách bản sách"></ul>
 			<form id="copy-add-form" class="add-copy-form">
